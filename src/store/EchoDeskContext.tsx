@@ -43,6 +43,7 @@ interface EchoDeskState {
   contextSubtitle: string;
   contextConfidence: number;
   contextSignals: string[];
+  setLiveContextInfo: (subtitle: string, confidence: number, signals: string[]) => void;
 
   // Sampling
   samplingMode: SamplingMode;
@@ -55,6 +56,7 @@ interface EchoDeskState {
 
   // Semantic events
   events: SemanticEvent[];
+  setEvents: React.Dispatch<React.SetStateAction<SemanticEvent[]>>;
 
   // System status
   systemStatus: SystemStatus;
@@ -114,7 +116,7 @@ export function EchoDeskProvider({ children }: { children: ReactNode }) {
   const [contextMode, setContextModeState] = useState<ContextMode>("DEEP FOCUS");
   const [samplingMode, setSamplingMode] = useState<SamplingMode>("BALANCED");
   const [signals, setSignals] = useState<SensorSignal[]>(initialSignals);
-  const [events] = useState<SemanticEvent[]>(initialEvents);
+  const [events, setEvents] = useState<SemanticEvent[]>(initialEvents);
   const [systemStatus, setSystemStatus] = useState<SystemStatus>(initialSystemStatus);
   const [aiRuntime, setAIRuntime] = useState<AIRuntime>(initialAIRuntime);
   const [models] = useState<AIModel[]>(initialModels);
@@ -144,7 +146,17 @@ export function EchoDeskProvider({ children }: { children: ReactNode }) {
   const [selectedModel, setSelectedModel] = useState<AIModel | null>(null);
   const [selectedSignal, setSelectedSignal] = useState<SensorSignal | null>(null);
 
-  const modeData = modeContextMap[contextMode];
+  const [liveSubtitle, setLiveSubtitle] = useState<string | null>(null);
+  const [liveConfidence, setLiveConfidence] = useState<number | null>(null);
+  const [liveSignals, setLiveSignals] = useState<string[] | null>(null);
+
+  const modeData = modeContextMap[contextMode] || modeContextMap["BALANCED"];
+
+  const setLiveContextInfo = useCallback((subtitle: string, confidence: number, signals: string[]) => {
+    setLiveSubtitle(subtitle);
+    setLiveConfidence(confidence);
+    setLiveSignals(signals);
+  }, []);
 
   const setContextMode = useCallback((mode: ContextMode) => {
     setContextModeState(mode);
@@ -266,15 +278,17 @@ export function EchoDeskProvider({ children }: { children: ReactNode }) {
     contextMode,
     setContextMode,
     currentContext: modeData.context as ContextState,
-    contextSubtitle: modeData.subtitle,
-    contextConfidence: modeData.confidence,
-    contextSignals: modeData.signals,
+    contextSubtitle: liveSubtitle || modeData.subtitle,
+    contextConfidence: liveConfidence ?? modeData.confidence,
+    contextSignals: liveSignals || modeData.signals,
+    setLiveContextInfo,
     samplingMode,
     setSamplingMode,
     signals,
     setSignals,
     toggleSensor,
     events,
+    setEvents,
     systemStatus,
     setSystemStatus,
     aiRuntime,

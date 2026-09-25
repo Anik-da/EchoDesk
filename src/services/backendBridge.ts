@@ -23,6 +23,7 @@ export interface BackendSnapshot {
   };
   protectedApps: any[];
   timelineEvents: any[];
+  events?: any[];
   system?: DeviceSystemInfo;
   telemetry: {
     cpu: number | null;

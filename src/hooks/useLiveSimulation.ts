@@ -6,12 +6,14 @@ export function useLiveSimulation() {
   const {
     telemetryMode,
     liveSimulation,
-    systemStatus,
+    contextMode,
+    setContextMode,
+    setLiveContextInfo,
+    setSignals,
+    setEvents,
     setSystemStatus,
-    aiRuntime,
     setAIRuntime,
     setDeviceInfo,
-    contextMode,
     setProtectedApps,
     setTimelineEvents,
     setEngineConnectionStatus
@@ -28,6 +30,78 @@ export function useLiveSimulation() {
 
         if (snapshot.system) {
           setDeviceInfo(snapshot.system);
+        }
+
+        // Sync real-time Context Engine state
+        if (snapshot.contextMode) {
+          setContextMode(snapshot.contextMode as any);
+        }
+        if (snapshot.contextSubtitle !== undefined) {
+          setLiveContextInfo(
+            snapshot.contextSubtitle,
+            snapshot.contextConfidence ?? 85,
+            snapshot.contextSignals || []
+          );
+        }
+
+        // Sync real-time sensor adapter signals if provided
+        if (snapshot.signals && Array.isArray(snapshot.signals)) {
+          const cam = snapshot.signals[0] || {};
+          const aud = snapshot.signals[1] || {};
+          const scr = snapshot.signals[2] || {};
+          const act = snapshot.signals[3] || {};
+
+          setSignals([
+            {
+              id: "camera",
+              label: "Vision",
+              icon: "Camera",
+              state: cam.enabled === false ? "off" : (cam.face_detected ? "active" : "low"),
+              description: cam.face_detected ? "User present (Face detected)" : "No face detected",
+              enabled: cam.enabled !== false,
+              activityLevel: cam.activity_level ?? (cam.face_detected ? 75 : 10),
+            },
+            {
+              id: "microphone",
+              label: "Audio",
+              icon: "Mic",
+              state: aud.enabled === false ? "off" : (aud.speech_detected ? "active" : "low"),
+              description: aud.speech_detected ? "Speech detected" : `Audio level: ${aud.audio_level_db ?? 0} dB`,
+              enabled: aud.enabled !== false,
+              activityLevel: aud.activity_level ?? (aud.speech_detected ? 80 : 15),
+            },
+            {
+              id: "screen",
+              label: "Screen",
+              icon: "Monitor",
+              state: scr.enabled === false ? "off" : "active",
+              description: scr.activeApp ? `${scr.activeApp} active` : "System Desktop",
+              enabled: scr.enabled !== false,
+              activityLevel: scr.activity_level ?? 70,
+            },
+            {
+              id: "activity",
+              label: "Activity",
+              icon: "Keyboard",
+              state: act.enabled === false ? "off" : (act.idle_seconds > 60 ? "idle" : "active"),
+              description: act.idle_seconds > 60 ? `Idle (${Math.round(act.idle_seconds)}s)` : "Active typing & mouse",
+              enabled: act.enabled !== false,
+              activityLevel: act.activity_level ?? (act.idle_seconds > 60 ? 5 : 65),
+            },
+          ]);
+        }
+
+        // Sync real semantic events
+        if (snapshot.events && Array.isArray(snapshot.events) && snapshot.events.length > 0) {
+          setEvents(
+            snapshot.events.map((e: any, idx: number) => ({
+              id: e.id || `evt-${idx}`,
+              label: e.label || e.type,
+              source: e.source || "system",
+              detected: Boolean(e.detected),
+              confidence: e.confidence ?? 90,
+            }))
+          );
         }
 
         // Sync system status directly from real hardware telemetry
