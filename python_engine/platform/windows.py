@@ -37,10 +37,12 @@ class WindowsPlatform(PlatformBase):
         model = "Unknown"
         board = "Unknown"
 
+        CREATE_NO_WINDOW = getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000)
+
         # 1. Try PowerShell CimInstance Win32_ComputerSystem
         try:
             cmd = ["powershell", "-NoProfile", "-Command", "Get-CimInstance Win32_ComputerSystem | Select-Object -Property Manufacturer, Model | ConvertTo-Json"]
-            proc = subprocess.run(cmd, capture_output=True, text=True, timeout=3)
+            proc = subprocess.run(cmd, capture_output=True, text=True, timeout=3, creationflags=CREATE_NO_WINDOW)
             if proc.returncode == 0 and proc.stdout.strip():
                 data = json.loads(proc.stdout)
                 if isinstance(data, list) and len(data) > 0:
@@ -58,7 +60,7 @@ class WindowsPlatform(PlatformBase):
         if model in ("Unknown", "System Product Name", "") or manufacturer in ("Unknown", ""):
             try:
                 cmd = ["powershell", "-NoProfile", "-Command", "Get-CimInstance Win32_BaseBoard | Select-Object -Property Manufacturer, Product | ConvertTo-Json"]
-                proc = subprocess.run(cmd, capture_output=True, text=True, timeout=3)
+                proc = subprocess.run(cmd, capture_output=True, text=True, timeout=3, creationflags=CREATE_NO_WINDOW)
                 if proc.returncode == 0 and proc.stdout.strip():
                     data = json.loads(proc.stdout)
                     if isinstance(data, list) and len(data) > 0:

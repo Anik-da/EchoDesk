@@ -2,6 +2,8 @@ import sys
 import subprocess
 import json
 
+CREATE_NO_WINDOW = getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000)
+
 def get_nvidia_telemetry() -> list:
     """Queries nvidia-smi for active NVIDIA GPU utilization, temperature, and VRAM."""
     try:
@@ -10,7 +12,10 @@ def get_nvidia_telemetry() -> list:
             "--query-gpu=name,utilization.gpu,temperature.gpu,memory.used,memory.total,driver_version",
             "--format=csv,noheader,nounits"
         ]
-        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=2)
+        kwargs = {"capture_output": True, "text": True, "timeout": 2}
+        if sys.platform == "win32":
+            kwargs["creationflags"] = CREATE_NO_WINDOW
+        proc = subprocess.run(cmd, **kwargs)
         if proc.returncode == 0 and proc.stdout.strip():
             results = []
             for line in proc.stdout.strip().splitlines():
@@ -62,7 +67,7 @@ def get_gpu_info() -> list:
     if sys.platform == "win32":
         try:
             cmd = ["powershell", "-NoProfile", "-Command", "Get-CimInstance Win32_VideoController | Select-Object -Property Name, DriverVersion, AdapterRAM | ConvertTo-Json"]
-            proc = subprocess.run(cmd, capture_output=True, text=True, timeout=3)
+            proc = subprocess.run(cmd, capture_output=True, text=True, timeout=3, creationflags=CREATE_NO_WINDOW)
             if proc.returncode == 0 and proc.stdout.strip():
                 data = json.loads(proc.stdout)
                 if isinstance(data, dict):

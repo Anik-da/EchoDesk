@@ -29,22 +29,30 @@ function getPythonEnginePath() {
   return path.join(__dirname, "..", "python_engine", "main.py");
 }
 
+let isLaunchingPython = false;
+
 function startPythonBackend() {
+  if (isLaunchingPython) return;
+  isLaunchingPython = true;
+
   checkPythonBackendRunning((isRunning) => {
     if (isRunning) {
       console.log("[Electron] Python engine is already running on port 8765.");
+      isLaunchingPython = false;
       return;
     }
 
     const scriptPath = getPythonEnginePath();
     const workingDir = path.dirname(scriptPath);
 
-    const candidates = process.platform === "win32" ? ["python", "py", "python3"] : ["python3", "python"];
+    // Never use 'py' on Windows 11 as it launches Windows Terminal tabs!
+    const candidates = process.platform === "win32" ? ["python", "python3"] : ["python3", "python"];
     let candidateIndex = 0;
 
     function trySpawn() {
       if (candidateIndex >= candidates.length) {
         console.error("[Electron] All Python candidate executables failed.");
+        isLaunchingPython = false;
         return;
       }
       const exe = candidates[candidateIndex];
@@ -53,7 +61,8 @@ function startPythonBackend() {
       try {
         const proc = spawn(exe, [scriptPath], {
           cwd: workingDir,
-          stdio: "inherit"
+          stdio: "ignore",
+          windowsHide: true
         });
 
         proc.on("error", (err) => {
@@ -67,9 +76,12 @@ function startPythonBackend() {
           if (pythonProcess === proc) {
             pythonProcess = null;
           }
+          isLaunchingPython = false;
         });
 
         pythonProcess = proc;
+        // Reset launching flag after 2 seconds
+        setTimeout(() => { isLaunchingPython = false; }, 2000);
       } catch (err) {
         console.warn(`[Electron] Exception spawning '${exe}':`, err);
         candidateIndex++;
@@ -81,15 +93,15 @@ function startPythonBackend() {
   });
 }
 
-// Periodic Health Check & Auto-Restart Monitor (every 5 seconds)
+// Periodic Health Check & Auto-Restart Monitor (every 8 seconds)
 setInterval(() => {
   checkPythonBackendRunning((isRunning) => {
-    if (!isRunning) {
+    if (!isRunning && !isLaunchingPython) {
       console.log("[Electron] Backend health check: Python engine offline. Triggering auto-restart...");
       startPythonBackend();
     }
   });
-}, 5000);
+}, 8000);
 
 function createWindow() {
   mainWindow = new BrowserWindow({
