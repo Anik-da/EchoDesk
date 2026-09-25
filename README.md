@@ -1,12 +1,87 @@
 # EchoDesk
 
-Privacy-First On-Device Context Engine
+**Privacy-First On-Device Context Engine**
 
-![EchoDesk Banner](https://raw.githubusercontent.com/Anik-da/EchoDesk/main/dist/assets/index-CobA7Psu.css)
+[![Latest Release](https://img.shields.io/github/v/release/Anik-da/EchoDesk?style=for-the-badge&color=blue)](https://github.com/Anik-da/EchoDesk/releases/latest)
+[![Windows](https://img.shields.io/badge/Platform-Windows_x64-0078D6?style=for-the-badge&logo=windows)](https://github.com/Anik-da/EchoDesk/releases/download/v1.0.0/EchoDesk-Setup-Windows-x64.exe)
+[![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
+
+---
+
+## 🚀 Download EchoDesk
+
+### 👉 [Download Latest EchoDesk Release](https://github.com/Anik-da/EchoDesk/releases/latest)
+
+---
+
+### Windows (x64)
+- 🪟 **[Download EchoDesk for Windows](https://github.com/Anik-da/EchoDesk/releases/download/v1.0.0/EchoDesk-Setup.exe)** (`EchoDesk-Setup.exe`)
+- Direct installer link: **[EchoDesk-Setup-Windows-x64.exe](https://github.com/Anik-da/EchoDesk/releases/download/v1.0.0/EchoDesk-Setup-Windows-x64.exe)** *(75.5 MB, NSIS Installer)*
+- Portable ZIP archive: **[EchoDesk-Windows-v1.0.0.zip](https://github.com/Anik-da/EchoDesk/releases/download/v1.0.0/EchoDesk-Windows-v1.0.0.zip)** *(448 MB)*
+
+### macOS (Apple Silicon & Intel)
+- 🍏 **[Download EchoDesk for macOS](https://github.com/Anik-da/EchoDesk/releases/latest)** *(Apple Silicon M-series & Intel Mac support; build from source via `npm run dist:mac`)*
+
+### Linux (x64)
+- 🐧 **[Download EchoDesk for Linux](https://github.com/Anik-da/EchoDesk/releases/latest)** *(AppImage and Debian package; build from source via `npm run dist:linux`)*
+
+---
+
+### 🛡️ Platform & Device Detection Notice
+
+> **"EchoDesk detects your device at runtime. Hardware information, operating system information, available sensors and AI acceleration are determined from the machine where EchoDesk is installed."**
+>
+> **"Unsupported hardware features are shown as unavailable rather than using simulated values."**
+
+---
+
+## 📥 Installation Instructions
+
+### WINDOWS
+
+1. Download **[EchoDesk for Windows](https://github.com/Anik-da/EchoDesk/releases/download/v1.0.0/EchoDesk-Setup-Windows-x64.exe)**.
+2. Run `EchoDesk-Setup.exe` (or `EchoDesk-Setup-Windows-x64.exe`).
+3. Follow the installer prompts to choose destination and shortcuts.
+4. Launch **EchoDesk**.
+5. Allow requested permissions when prompted.
+6. EchoDesk detects the current device automatically and provisions a fresh local database.
+
+### MACOS
+
+1. Download the `.dmg` from the **[Latest Release](https://github.com/Anik-da/EchoDesk/releases/latest)**.
+2. Open the DMG file.
+3. Move **EchoDesk** to your `Applications` folder.
+4. Launch **EchoDesk**.
+5. Allow required system permissions (Camera, Microphone, Screen Recording) in macOS System Settings.
+6. EchoDesk detects the current Mac automatically.
+
+### LINUX
+
+#### AppImage:
+1. Download the AppImage (`EchoDesk-Linux-x64.AppImage`) from the **[Latest Release](https://github.com/Anik-da/EchoDesk/releases/latest)**.
+2. Make it executable:
+   ```bash
+   chmod +x EchoDesk-Linux-x64.AppImage
+   ```
+3. Run EchoDesk:
+   ```bash
+   ./EchoDesk-Linux-x64.AppImage
+   ```
+
+#### Debian / Ubuntu (.deb):
+1. Download the `.deb` package (`EchoDesk-Linux-x64.deb`).
+2. Install via package manager:
+   ```bash
+   sudo dpkg -i EchoDesk-Linux-x64.deb
+   sudo apt-get install -f
+   ```
+3. Launch `EchoDesk` from your application launcher or terminal.
+
+---
 
 ## Overview
 
-**EchoDesk** is an enterprise-grade, privacy-first, on-device context engine and utility software for Windows desktop systems. Inspired by modern laptop control center applications (such as GIGABYTE Control Center), EchoDesk aggregates hardware telemetry, local sensor data, and dynamic operational states to synthesize real-time user context—without compromising user privacy or sending sensitive media outside the local machine.
+**EchoDesk** is an enterprise-grade, privacy-first, on-device context engine and utility software for desktop systems. Inspired by modern laptop control center applications (such as GIGABYTE Control Center), EchoDesk aggregates live hardware telemetry, local sensor data, and dynamic operational states to synthesize real-time user context—without compromising user privacy or sending sensitive media outside the local machine.
 
 ---
 
@@ -22,7 +97,7 @@ EchoDesk includes all 42 core context management & system monitoring capabilitie
 6. **Camera Status**: Hardware status and active access indicator for optical sensors.
 7. **Microphone Status**: Audio input monitoring and decibel telemetry.
 8. **Screen/Application Status**: Active window title & application process detection.
-9. **Activity Status**: Keyboard & mouse idle detection using native Windows API telemetry.
+9. **Activity Status**: Keyboard & mouse idle detection using native OS API telemetry.
 10. **CPU Telemetry**: Core usage, frequency, and load distribution monitoring.
 11. **GPU Telemetry**: GPU utilization and VRAM allocation.
 12. **RAM Telemetry**: Memory consumption and system buffer tracking.
@@ -30,7 +105,7 @@ EchoDesk includes all 42 core context management & system monitoring capabilitie
 14. **Battery Telemetry**: Power source, charge percentage, and estimated runtime remaining.
 15. **Temperature Telemetry**: Thermal zone sensors and thermal throttling status.
 16. **Fan Information**: Dual fan tachometer speeds (CPU Fan & GPU Fan RPM).
-17. **AI Runtime Status**: On-device execution provider status (`Intel CPU`, `NVIDIA GPU`, `Snapdragon NPU`).
+17. **AI Runtime Status**: On-device execution provider status (`Intel CPU`, `NVIDIA GPU`, `Snapdragon NPU`, `Apple Metal`).
 18. **NPU/CPU Runtime State**: Real-time accelerator provider state and hardware tier detection.
 19. **Inference Latency**: Sub-millisecond context inference latency benchmarking.
 20. **Context Signals**: Raw telemetry feature streams feeding into the context engine.
@@ -54,7 +129,7 @@ EchoDesk includes all 42 core context management & system monitoring capabilitie
 38. **System-Tray-Style Controls**: Minimize-to-tray, quick private mode toggle, and notification menu.
 39. **AI Sampling Controls**: Telemetry sampling interval controls (100ms - 5000ms).
 40. **Context Sensitivity**: Threshold tuning for context state transition triggers.
-41. **Settings**: Application preferences, start-with-Windows toggles, and appearance settings.
+41. **Settings**: Application preferences, start-with-OS toggles, and appearance settings.
 42. **Development/Simulation Mode**: Fallback hardware simulator for testing on non-target environments.
 
 ---
@@ -75,7 +150,7 @@ Control Center (Interactive Laptop Utility UI)
 
 ---
 
-## Privacy
+## Privacy Guarantee
 
 EchoDesk is built from the ground up with a strict **Local-First, Zero-Trust Privacy Guarantee**:
 
@@ -83,9 +158,7 @@ EchoDesk is built from the ground up with a strict **Local-First, Zero-Trust Pri
 - **Raw Media Handling**: Video frames and audio buffers are processed entirely in volatile memory (RAM) and immediately discarded. **Raw audio or video is never saved to disk**.
 - **Private Mode**: Engaging Private Mode instantly disables all camera, microphone, and screen listeners at the hardware adapter level.
 - **Protected Applications**: When a user switches to a flagged sensitive application (e.g. Password Manager, Banking Browser Window), EchoDesk automatically pauses sensing until the application loses focus.
-- **Semantic Event Storage**: Only high-level abstract events (e.g. `User Focus high`, `App category: IDE`) are stored in an encrypted local SQLite database (`echodesk.db`).
-
----
+- **Semantic Event Storage**: Only high-level abstract events (e.g. `User Focus high`, `App category: IDE`) are stored in a local SQLite database (`echodesk.db`) in the user's platform AppData directory.
 
 ---
 
@@ -112,29 +185,8 @@ EchoDesk is built from the ground up with a strict **Local-First, Zero-Trust Pri
                      │
               Context Engine
                      │
-               Local Storage
+         User Local AppData Storage
 ```
-
----
-
-## DOWNLOAD ECHODESK
-
-EchoDesk is packaged for Windows, macOS, and Linux desktop environments from the official GitHub Release distribution point.
-
-### Windows (x64 / ARM64)
-- 📦 **[Download Windows Release Package (.zip / .exe)](https://github.com/Anik-da/EchoDesk/releases/download/v1.0.0/EchoDesk-Windows-v1.0.0.zip)**
-- Supports Windows 10/11 on Intel/AMD x64 and Qualcomm Snapdragon ARM64 devices.
-
-### macOS (Intel & Apple Silicon)
-- 🍏 **[Download macOS (.dmg / .zip)](https://github.com/Anik-da/EchoDesk/releases/tag/v1.0.0)**
-- Universal support for Apple Silicon (M1/M2/M3/M4 via CoreML & Metal) and Intel Macs.
-
-### Linux (x64 / ARM64)
-- 🐧 **[Download Linux (AppImage / .deb)](https://github.com/Anik-da/EchoDesk/releases/tag/v1.0.0)**
-- Portable AppImage and Debian package with native X11/Wayland context detection and CUDA/CPU acceleration.
-
-### Latest Release
-- **[Release Notes & Changelog (v1.0.0)](https://github.com/Anik-da/EchoDesk/releases/tag/v1.0.0)**
 
 ---
 

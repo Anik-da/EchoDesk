@@ -17,9 +17,13 @@ function checkPythonBackendRunning(callback) {
 
 function getPythonEnginePath() {
   if (app.isPackaged) {
-    const resPath = path.join(process.resourcesPath, "python_engine", "main.py");
-    if (require("fs").existsSync(resPath)) {
-      return resPath;
+    const directRes = path.join(process.resourcesPath, "python_engine", "main.py");
+    if (require("fs").existsSync(directRes)) {
+      return directRes;
+    }
+    const appRes = path.join(process.resourcesPath, "app", "python_engine", "main.py");
+    if (require("fs").existsSync(appRes)) {
+      return appRes;
     }
   }
   return path.join(__dirname, "..", "python_engine", "main.py");

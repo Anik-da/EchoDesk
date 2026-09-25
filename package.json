@@ -1,5 +1,8 @@
 {
   "name": "echodesk-control-center",
+  "productName": "EchoDesk",
+  "description": "EchoDesk — Privacy-First On-Device Context Engine",
+  "author": "Anik-da",
   "private": true,
   "version": "1.0.0",
   "type": "module",
@@ -39,20 +42,18 @@
       "target": [
         {
           "target": "nsis",
-          "arch": ["x64", "arm64"]
-        },
-        {
-          "target": "portable",
           "arch": ["x64"]
         }
-      ]
+      ],
+      "artifactName": "EchoDesk-Setup-Windows-${arch}.${ext}"
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "EchoDesk"
+      "shortcutName": "EchoDesk",
+      "artifactName": "EchoDesk-Setup-Windows-${arch}.${ext}"
     },
     "mac": {
       "target": [
