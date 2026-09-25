@@ -149,3 +149,31 @@ def log_timeline_event(context, duration, confidence, signals, explanation, raw_
     """, (evt_id, now, time_str, hour, minute, context, duration, confidence, json.dumps(signals), explanation, json.dumps(raw_payload or {})))
     conn.commit()
     conn.close()
+
+def cleanup_retention_history(retention_str: str):
+    """Deletes timeline events older than specified retention period."""
+    if retention_str == "Never":
+        return 0
+    days_map = {
+        "1 day": 1,
+        "7 days": 7,
+        "30 days": 30
+    }
+    days = days_map.get(retention_str, 30)
+    cutoff = time.time() - (days * 86400)
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM timeline_events WHERE timestamp < ?", (cutoff,))
+    deleted = cursor.rowcount
+    conn.commit()
+    conn.close()
+    return deleted
+
+def clear_all_history():
+    """Deletes all local semantic timeline events from SQLite."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM timeline_events")
+    conn.commit()
+    conn.close()
+    return True

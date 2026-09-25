@@ -10,17 +10,13 @@ class POINT(ctypes.Structure):
     _fields_ = [("x", ctypes.c_long), ("y", ctypes.c_long)]
 
 def get_idle_time_ms():
-    """Returns system idle time in milliseconds using Windows GetLastInputInfo."""
-    if sys.platform == "win32":
-        try:
-            lii = LASTINPUTINFO()
-            lii.cbSize = ctypes.sizeof(LASTINPUTINFO)
-            if ctypes.windll.user32.GetLastInputInfo(ctypes.byref(lii)):
-                millis = ctypes.windll.kernel32.GetTickCount() - lii.dwTime
-                return max(0, millis)
-        except Exception:
-            return 0
-    return 0
+    """Returns system idle time in milliseconds using the active platform adapter."""
+    try:
+        from platform import get_platform_adapter
+        adapter = get_platform_adapter()
+        return adapter.get_idle_time_ms()
+    except Exception:
+        return 0
 
 class ActivityAdapter(BaseSensorAdapter):
     def __init__(self):
@@ -32,14 +28,12 @@ class ActivityAdapter(BaseSensorAdapter):
         return True
 
     def get_cursor_pos(self):
-        if sys.platform == "win32":
-            try:
-                pt = POINT()
-                ctypes.windll.user32.GetCursorPos(ctypes.byref(pt))
-                return (pt.x, pt.y)
-            except Exception:
-                return (0, 0)
-        return (0, 0)
+        try:
+            from platform import get_platform_adapter
+            adapter = get_platform_adapter()
+            return adapter.get_cursor_pos()
+        except Exception:
+            return (0, 0)
 
     def read(self) -> dict:
         if not self.enabled:

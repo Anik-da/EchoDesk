@@ -14,6 +14,7 @@ export function useLiveSimulation() {
     setSystemStatus,
     setAIRuntime,
     setDeviceInfo,
+    setPrivacy,
     setProtectedApps,
     setTimelineEvents,
     setEngineConnectionStatus
@@ -56,37 +57,37 @@ export function useLiveSimulation() {
               id: "camera",
               label: "Vision",
               icon: "Camera",
-              state: cam.enabled === false ? "off" : (cam.face_detected ? "active" : "low"),
-              description: cam.face_detected ? "User present (Face detected)" : "No face detected",
+              state: cam.enabled === false ? "off" : (cam.available === false ? "off" : (cam.state || "low")),
+              description: cam.description || (cam.state === "active" ? "User present" : "No person detected"),
               enabled: cam.enabled !== false,
-              activityLevel: cam.activity_level ?? (cam.face_detected ? 75 : 10),
+              activityLevel: cam.activityLevel ?? cam.activity_level ?? 0,
             },
             {
               id: "microphone",
               label: "Audio",
               icon: "Mic",
-              state: aud.enabled === false ? "off" : (aud.speech_detected ? "active" : "low"),
-              description: aud.speech_detected ? "Speech detected" : `Audio level: ${aud.audio_level_db ?? 0} dB`,
+              state: aud.enabled === false ? "off" : (aud.available === false ? "off" : (aud.state || "low")),
+              description: aud.description || "Microphone silent",
               enabled: aud.enabled !== false,
-              activityLevel: aud.activity_level ?? (aud.speech_detected ? 80 : 15),
+              activityLevel: aud.activityLevel ?? aud.activity_level ?? 0,
             },
             {
               id: "screen",
               label: "Screen",
               icon: "Monitor",
-              state: scr.enabled === false ? "off" : "active",
-              description: scr.activeApp ? `${scr.activeApp} active` : "System Desktop",
+              state: scr.enabled === false ? "off" : (scr.state || "active"),
+              description: scr.description || (scr.activeApp ? `${scr.activeApp} active` : "System Desktop"),
               enabled: scr.enabled !== false,
-              activityLevel: scr.activity_level ?? 70,
+              activityLevel: scr.activityLevel ?? scr.activity_level ?? 70,
             },
             {
               id: "activity",
               label: "Activity",
               icon: "Keyboard",
-              state: act.enabled === false ? "off" : (act.idle_seconds > 60 ? "idle" : "active"),
-              description: act.idle_seconds > 60 ? `Idle (${Math.round(act.idle_seconds)}s)` : "Active typing & mouse",
+              state: act.enabled === false ? "off" : (act.state || "active"),
+              description: act.description || "System active",
               enabled: act.enabled !== false,
-              activityLevel: act.activity_level ?? (act.idle_seconds > 60 ? 5 : 65),
+              activityLevel: act.activityLevel ?? act.activity_level ?? 50,
             },
           ]);
         }
@@ -138,7 +139,22 @@ export function useLiveSimulation() {
           provider: snapshot.telemetry.aiProvider || "CPU",
         }));
 
-        // Sync Privacy & Apps if available
+        // Sync Privacy state
+        if (snapshot.privacy) {
+          setPrivacy({
+            privateMode: snapshot.privacy.privateMode,
+            cameraActive: snapshot.privacy.cameraActive,
+            microphoneActive: snapshot.privacy.microphoneActive,
+            screenActive: snapshot.privacy.screenActive,
+            cloudProcessing: snapshot.privacy.cloudProcessing ?? false,
+            rawVideoStored: false,
+            rawAudioStored: false,
+            historyPaused: snapshot.privacy.historyPaused,
+            retention: (snapshot.privacy.retention as any) || "30 days",
+          });
+        }
+
+        // Sync Protected Apps & Timeline Events
         if (snapshot.protectedApps && snapshot.protectedApps.length > 0) {
           setProtectedApps(snapshot.protectedApps);
         }
@@ -152,7 +168,7 @@ export function useLiveSimulation() {
     );
 
     return () => BackendBridge.disconnect();
-  }, [setSystemStatus, setAIRuntime, setDeviceInfo, setProtectedApps, setTimelineEvents, setEngineConnectionStatus]);
+  }, [setSystemStatus, setAIRuntime, setDeviceInfo, setPrivacy, setProtectedApps, setTimelineEvents, setEngineConnectionStatus]);
 
   // 2. Simulated telemetry loop - ONLY runs in explicit DEVELOPMENT SIMULATION mode!
   useEffect(() => {

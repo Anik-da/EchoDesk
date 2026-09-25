@@ -110,20 +110,16 @@ class MicrophoneAdapter(BaseSensorAdapter):
             except Exception as e:
                 pass
 
-        # If sounddevice is unavailable, fallback gracefully to system audio level simulation/probe without crashing
-        t = time.time()
-        sim_level = int(22 + 10 * math.sin(t * 0.4))
-        speech = sim_level > 28
-
+        # If sounddevice is unavailable or fails, return honest unavailable status in LIVE mode
         self.cached_result = {
             "id": self.sensor_id,
             "label": self.label,
             "enabled": True,
-            "available": True,
-            "state": "active" if speech else "low",
-            "activityLevel": sim_level,
-            "semantic_outputs": ["SPEECH_DETECTED"] if speech else ["BACKGROUND_NOISE"],
-            "description": f"Voice activity: {'Speech detected (local VAD)' if speech else 'Quiet ambient background'}",
+            "available": False,
+            "state": "unavailable",
+            "activityLevel": 0,
+            "semantic_outputs": ["SILENCE"],
+            "description": "Microphone unavailable or permission required",
             "raw_released": True
         }
         return self.cached_result

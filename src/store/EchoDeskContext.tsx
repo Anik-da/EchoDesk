@@ -201,18 +201,26 @@ export function EchoDeskProvider({ children }: { children: ReactNode }) {
   }, [setContextMode]);
 
   const toggleSensor = useCallback((id: string) => {
-    setSignals((prev) =>
-      prev.map((s) =>
+    setSignals((prev) => {
+      const target = prev.find((s) => s.id === id);
+      const newEnabled = target ? !target.enabled : true;
+      import("@/services/backendBridge").then(({ BackendBridge }) => {
+        BackendBridge.toggleSensor(id, newEnabled);
+      });
+      return prev.map((s) =>
         s.id === id
-          ? { ...s, enabled: !s.enabled, state: !s.enabled ? "active" : "off", activityLevel: !s.enabled ? 50 : 0 }
+          ? { ...s, enabled: newEnabled, state: newEnabled ? "active" : "off", activityLevel: newEnabled ? 50 : 0 }
           : s
-      )
-    );
+      );
+    });
   }, []);
 
   const togglePrivateMode = useCallback(() => {
     setPrivacy((p) => {
       const newPrivate = !p.privateMode;
+      import("@/services/backendBridge").then(({ BackendBridge }) => {
+        BackendBridge.togglePrivateMode(newPrivate);
+      });
       if (newPrivate) {
         setContextMode("PRIVATE");
       } else {
@@ -235,10 +243,16 @@ export function EchoDeskProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const addProtectedApp = useCallback((name: string) => {
+    import("@/services/backendBridge").then(({ BackendBridge }) => {
+      BackendBridge.addProtectedApp(name);
+    });
     setProtectedApps((prev) => [...prev, { id: `app${Date.now()}`, name, icon: "Shield", protected: true }]);
   }, []);
 
   const removeProtectedApp = useCallback((id: string) => {
+    import("@/services/backendBridge").then(({ BackendBridge }) => {
+      BackendBridge.removeProtectedApp(id);
+    });
     setProtectedApps((prev) => prev.filter((a) => a.id !== id));
   }, []);
 

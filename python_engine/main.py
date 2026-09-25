@@ -132,6 +132,25 @@ class EchoDeskHandler(http.server.BaseHTTPRequestHandler):
             self._send_cors_headers()
             self.end_headers()
             self.wfile.write(json.dumps({"success": True}).encode("utf-8"))
+
+        elif self.path == "/api/clear-history":
+            from storage.db import clear_all_history
+            clear_all_history()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self._send_cors_headers()
+            self.end_headers()
+            self.wfile.write(json.dumps({"success": True}).encode("utf-8"))
+
+        elif self.path == "/api/set-retention":
+            period = payload.get("retention", "30 days")
+            from storage.db import cleanup_retention_history
+            deleted = cleanup_retention_history(period)
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self._send_cors_headers()
+            self.end_headers()
+            self.wfile.write(json.dumps({"success": True, "deletedCount": deleted}).encode("utf-8"))
         else:
             self.send_response(404)
             self.end_headers()

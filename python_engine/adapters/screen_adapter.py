@@ -32,44 +32,13 @@ DEFAULT_APP_CATEGORY_MAP = {
 }
 
 def get_active_foreground_window():
-    """Returns (app_name, window_title) using native Windows ctypes."""
-    if sys.platform == "win32":
-        try:
-            hwnd = ctypes.windll.user32.GetForegroundWindow()
-            if not hwnd:
-                return "Desktop", "Windows Desktop"
-
-            length = ctypes.windll.user32.GetWindowTextLengthW(hwnd)
-            buf = ctypes.create_unicode_buffer(length + 1)
-            ctypes.windll.user32.GetWindowTextW(hwnd, buf, length + 1)
-            title = buf.value or "System Window"
-
-            pid = ctypes.c_ulong()
-            ctypes.windll.user32.GetWindowThreadProcessId(hwnd, ctypes.byref(pid))
-
-            lower_title = title.lower()
-            if "code" in lower_title or "visual studio" in lower_title:
-                app_name = "VS Code"
-            elif "chrome" in lower_title:
-                app_name = "Google Chrome"
-            elif "edge" in lower_title:
-                app_name = "Microsoft Edge"
-            elif "zoom" in lower_title or "meeting" in lower_title:
-                app_name = "Zoom"
-            elif "slack" in lower_title:
-                app_name = "Slack"
-            elif "1password" in lower_title:
-                app_name = "1Password"
-            elif "explorer" in lower_title or "this pc" in lower_title:
-                app_name = "File Explorer"
-            else:
-                parts = title.rsplit(" - ", 1)
-                app_name = parts[1] if len(parts) > 1 else title[:20]
-
-            return app_name, title
-        except Exception:
-            return "VS Code", "EchoDesk — Visual Studio Code"
-    return "VS Code", "EchoDesk — Visual Studio Code"
+    """Returns (app_name, window_title) using the active platform adapter."""
+    try:
+        from platform import get_platform_adapter
+        adapter = get_platform_adapter()
+        return adapter.get_window_context()
+    except Exception:
+        return "Desktop", "System Application Window"
 
 class ScreenAdapter(BaseSensorAdapter):
     def __init__(self, category_map=None):

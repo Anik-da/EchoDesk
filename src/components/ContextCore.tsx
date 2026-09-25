@@ -4,9 +4,15 @@ import { useAnimatedNumber } from "@/hooks/useAnimatedNumber";
 import { cn } from "@/utils/cn";
 
 export function ContextCore() {
-  const { currentContext, contextConfidence, contextMode, setContextMode, signals, contextSubtitle, aiRuntime } = useEchoDesk();
+  const { currentContext, contextConfidence, contextMode, setContextMode, signals, contextSubtitle, aiRuntime, systemStatus } = useEchoDesk();
   const animatedConf = useAnimatedNumber(contextConfidence);
   const isPrivate = contextMode === "PRIVATE";
+
+  const userStatus = isPrivate ? "PAUSED" : (signals[0]?.state === "active" ? "PRESENT" : (signals[0]?.state === "off" ? "OFF" : "AWAY"));
+  const appStatus = isPrivate ? "N/A" : (signals[2]?.description ? signals[2].description.replace(" active", "").replace("Active: ", "").slice(0, 14) : "DESKTOP");
+  const envStatus = isPrivate ? "N/A" : (signals[1]?.state === "active" ? "SPEECH" : (signals[1]?.state === "off" ? "OFF" : "QUIET"));
+  const actStatus = isPrivate ? "NONE" : (signals[3]?.state === "active" ? "ACTIVE" : (signals[3]?.state === "idle" ? "IDLE" : "OFF"));
+  const tempDisplay = isPrivate ? "PAUSED" : (systemStatus.gpuTemp !== null ? `${systemStatus.gpuTemp}°C` : (systemStatus.cpuTemp !== null ? `${systemStatus.cpuTemp}°C` : "Unavailable"));
 
   // Dynamic Color Palette for Every Mode
   const modeThemes: Record<string, { main: string; glow: string; text: string; bg: string; border: string }> = {
@@ -205,15 +211,15 @@ export function ContextCore() {
 
           {/* Left Readout: Clock Speed / Latency */}
           <text x="65" y="275" textAnchor="middle" fill="#e4e4e7" fontSize="13" fontWeight="bold" fontFamily="monospace">
-            {aiRuntime.inferenceLatency} ms
+            {aiRuntime.inferenceLatency !== null ? `${aiRuntime.inferenceLatency} ms` : "N/A"}
           </text>
-          <text x="65" y="290" textAnchor="middle" fill="#71717a" fontSize="8" className="uppercase" fontFamily="sans-serif">
-            INFERENCE LATENCY
+          <text x="65" y="290" textAnchor="middle" fill="#71717a" fontSize="7" className="uppercase" fontFamily="sans-serif">
+            Context processing
           </text>
 
           {/* Right Readout: Temperature / Activity */}
-          <text x="275" y="275" textAnchor="middle" fill="#e4e4e7" fontSize="13" fontWeight="bold" fontFamily="monospace">
-            {isPrivate ? "0%" : "45°C"}
+          <text x="275" y="275" textAnchor="middle" fill="#e4e4e7" fontSize="12" fontWeight="bold" fontFamily="monospace">
+            {tempDisplay}
           </text>
           <text x="275" y="290" textAnchor="middle" fill="#71717a" fontSize="8" className="uppercase" fontFamily="sans-serif">
             ENGINE TEMP
@@ -223,29 +229,29 @@ export function ContextCore() {
         {/* 4 Supporting Signals Cards (GIGABYTE Style Positioned Around Dial) */}
         <div className="absolute top-4 left-2 flex flex-col gap-1">
           <span className="text-[8px] font-mono uppercase text-zinc-500">USER</span>
-          <span className={cn("text-[10px] font-mono font-bold uppercase", isPrivate ? "text-zinc-600" : "text-lime-400")}>
-            {isPrivate ? "OFF" : "PRESENT"}
+          <span className={cn("text-[10px] font-mono font-bold uppercase", userStatus === "PRESENT" ? "text-lime-400" : "text-zinc-500")}>
+            {userStatus}
           </span>
         </div>
 
-        <div className="absolute top-4 right-2 flex flex-col items-end gap-1">
+        <div className="absolute top-4 right-2 flex flex-col items-end gap-1 max-w-[110px]">
           <span className="text-[8px] font-mono uppercase text-zinc-500">APPLICATION</span>
-          <span className="text-[10px] font-mono font-bold text-zinc-200 uppercase">
-            {isPrivate ? "N/A" : "VS CODE"}
+          <span className="text-[10px] font-mono font-bold text-zinc-200 uppercase truncate" title={appStatus}>
+            {appStatus}
           </span>
         </div>
 
         <div className="absolute bottom-4 left-2 flex flex-col gap-1">
           <span className="text-[8px] font-mono uppercase text-zinc-500">ENVIRONMENT</span>
-          <span className="text-[10px] font-mono font-bold text-cyan-400 uppercase">
-            {isPrivate ? "N/A" : "QUIET"}
+          <span className={cn("text-[10px] font-mono font-bold uppercase", envStatus === "SPEECH" ? "text-amber-400" : "text-cyan-400")}>
+            {envStatus}
           </span>
         </div>
 
         <div className="absolute bottom-4 right-2 flex flex-col items-end gap-1">
           <span className="text-[8px] font-mono uppercase text-zinc-500">ACTIVITY</span>
-          <span className="text-[10px] font-mono font-bold text-amber-400 uppercase">
-            {isPrivate ? "NONE" : "TYPING"}
+          <span className={cn("text-[10px] font-mono font-bold uppercase", actStatus === "ACTIVE" ? "text-amber-400" : "text-zinc-500")}>
+            {actStatus}
           </span>
         </div>
       </div>
