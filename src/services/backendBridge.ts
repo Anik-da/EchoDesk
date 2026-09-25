@@ -71,32 +71,65 @@ export class BackendBridge {
     }
   }
 
+  private static reconnectTimer: any = null;
+
   public static subscribeToUpdates(onData: (snapshot: BackendSnapshot) => void, onError?: () => void) {
     if (this.eventSource) {
       this.eventSource.close();
+      this.eventSource = null;
+    }
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
     }
 
-    try {
-      this.eventSource = new EventSource(`${BACKEND_URL}/api/stream`);
-      this.eventSource.onmessage = (event) => {
-        try {
-          const snapshot: BackendSnapshot = JSON.parse(event.data);
-          onData(snapshot);
-        } catch (e) {
-          console.error("Failed to parse SSE snapshot:", e);
-        }
-      };
+    const connect = () => {
+      try {
+        const es = new EventSource(`${BACKEND_URL}/api/stream`);
+        this.eventSource = es;
 
-      this.eventSource.onerror = () => {
+        es.onmessage = (event) => {
+          try {
+            const snapshot: BackendSnapshot = JSON.parse(event.data);
+            onData(snapshot);
+          } catch (e) {
+            console.error("Failed to parse SSE snapshot:", e);
+          }
+        };
+
+        es.onerror = () => {
+          if (onError) onError();
+          if (this.eventSource) {
+            this.eventSource.close();
+            this.eventSource = null;
+          }
+          // Automatically retry connecting every 2 seconds until Python engine is reachable
+          if (!this.reconnectTimer) {
+            this.reconnectTimer = setTimeout(() => {
+              this.reconnectTimer = null;
+              connect();
+            }, 2000);
+          }
+        };
+      } catch {
         if (onError) onError();
-        this.disconnect();
-      };
-    } catch {
-      if (onError) onError();
-    }
+        if (!this.reconnectTimer) {
+          this.reconnectTimer = setTimeout(() => {
+            this.reconnectTimer = null;
+            connect();
+          }, 2000);
+        }
+      }
+    };
+
+    connect();
   }
 
   public static disconnect() {
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
     if (this.eventSource) {
       this.eventSource.close();
       this.eventSource = null;

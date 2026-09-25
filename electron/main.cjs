@@ -36,21 +36,60 @@ function startPythonBackend() {
       return;
     }
 
-    const pythonExecutable = process.platform === "win32" ? "python" : "python3";
     const scriptPath = getPythonEnginePath();
     const workingDir = path.dirname(scriptPath);
 
-    console.log(`[Electron] Launching Python engine: ${pythonExecutable} ${scriptPath}`);
-    pythonProcess = spawn(pythonExecutable, [scriptPath], {
-      cwd: workingDir,
-      stdio: "inherit"
-    });
+    const candidates = process.platform === "win32" ? ["python", "py", "python3"] : ["python3", "python"];
+    let candidateIndex = 0;
 
-    pythonProcess.on("error", (err) => {
-      console.error("[Electron] Failed to start Python process:", err);
-    });
+    function trySpawn() {
+      if (candidateIndex >= candidates.length) {
+        console.error("[Electron] All Python candidate executables failed.");
+        return;
+      }
+      const exe = candidates[candidateIndex];
+      console.log(`[Electron] Attempting to launch Python engine with: ${exe} ${scriptPath}`);
+
+      try {
+        const proc = spawn(exe, [scriptPath], {
+          cwd: workingDir,
+          stdio: "inherit"
+        });
+
+        proc.on("error", (err) => {
+          console.warn(`[Electron] Failed to spawn with '${exe}':`, err.message);
+          candidateIndex++;
+          trySpawn();
+        });
+
+        proc.on("exit", (code) => {
+          console.log(`[Electron] Python process exited with code ${code}`);
+          if (pythonProcess === proc) {
+            pythonProcess = null;
+          }
+        });
+
+        pythonProcess = proc;
+      } catch (err) {
+        console.warn(`[Electron] Exception spawning '${exe}':`, err);
+        candidateIndex++;
+        trySpawn();
+      }
+    }
+
+    trySpawn();
   });
 }
+
+// Periodic Health Check & Auto-Restart Monitor (every 5 seconds)
+setInterval(() => {
+  checkPythonBackendRunning((isRunning) => {
+    if (!isRunning) {
+      console.log("[Electron] Backend health check: Python engine offline. Triggering auto-restart...");
+      startPythonBackend();
+    }
+  });
+}, 5000);
 
 function createWindow() {
   mainWindow = new BrowserWindow({
