@@ -15,7 +15,7 @@
 ---
 
 ### Windows (x64)
-- 🪟 **[Download EchoDesk for Windows](https://github.com/Anik-da/EchoDesk/releases/download/v1.0.0/EchoDesk-Setup.exe)** (`EchoDesk-Setup.exe`)
+- 🪟 **[Download EchoDesk for Windows](https://github.com/Anik-da/EchoDesk/releases/download/v1.0.0/EchoDesk-Setup-Windows-x64.exe)** (`EchoDesk-Setup-Windows-x64.exe`)
 - Direct installer link: **[EchoDesk-Setup-Windows-x64.exe](https://github.com/Anik-da/EchoDesk/releases/download/v1.0.0/EchoDesk-Setup-Windows-x64.exe)** *(75.5 MB, NSIS Installer)*
 - Portable ZIP archive: **[EchoDesk-Windows-v1.0.0.zip](https://github.com/Anik-da/EchoDesk/releases/download/v1.0.0/EchoDesk-Windows-v1.0.0.zip)** *(448 MB)*
 
