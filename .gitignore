@@ -21,3 +21,22 @@ dist-ssr
 *.sln
 *.sw?
 .env
+
+# Build & Release Outputs
+dist_electron/
+release-builds/
+*.exe
+*.zip
+
+# Local SQLite & Caches
+*.db
+echodesk.db
+python_engine/storage/echodesk.db
+.echodesk/
+__pycache__/
+*.pyc
+
+# Python Virtual Environments
+.venv/
+venv/
+env/

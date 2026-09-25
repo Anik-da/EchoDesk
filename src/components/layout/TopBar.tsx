@@ -1,16 +1,12 @@
-import { useState } from "react";
-import { Settings, Minus, Square, X, Clock, ShieldCheck, Activity, Cpu } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Settings, Minus, Square, X, Info, ShieldCheck, Cpu } from "lucide-react";
 import { useEchoDesk } from "@/store/EchoDeskContext";
 import { Tooltip } from "@/components/ui/Tooltip";
-import { StatusDot } from "@/components/ui/StatusDot";
-import { BackgroundPopover } from "@/components/BackgroundPopover";
-import { cn } from "@/utils/cn";
-import { useEffect } from "react";
+import { BackendBridge } from "@/services/backendBridge";
 
 export function TopBar() {
-  const { privacy, aiRuntime, liveSimulation, toggleLiveSimulation } = useEchoDesk();
+  const { privacy, aiRuntime, engineConnectionStatus, setActiveNav } = useEchoDesk();
   const [time, setTime] = useState("");
-  const [bgOpen, setBgOpen] = useState(false);
 
   useEffect(() => {
     const update = () => {
@@ -22,93 +18,66 @@ export function TopBar() {
     return () => clearInterval(i);
   }, []);
 
-  const sensingActive = !privacy.privateMode;
+  const isElectron = BackendBridge.isElectronAvailable();
+
+  const handleMinimize = () => {
+    if (isElectron) (window as any).echoDeskAPI.minimizeWindow();
+  };
+  const handleMaximize = () => {
+    if (isElectron) (window as any).echoDeskAPI.maximizeWindow();
+  };
+  const handleClose = () => {
+    if (isElectron) (window as any).echoDeskAPI.closeWindow();
+  };
 
   return (
-    <header className="flex h-12 items-center justify-between border-b border-zinc-800 bg-zinc-950/90 px-3 backdrop-blur">
-      {/* Left: Logo */}
-      <div className="flex items-center gap-2.5">
-        <div className="flex h-6 w-6 items-center justify-center rounded bg-gradient-to-br from-emerald-400 to-emerald-600">
-          <Activity className="h-3.5 w-3.5 text-zinc-950" strokeWidth={2.5} />
-        </div>
-        <div className="flex flex-col leading-none">
-          <span className="text-sm font-bold tracking-wide text-zinc-100">ECHODESK</span>
-          <span className="text-[8px] font-medium uppercase tracking-[0.2em] text-emerald-400/70">Context Engine</span>
-        </div>
+    <header className="flex h-10 items-center justify-between border-b border-[#1f2229] bg-[#070709] px-3 select-none">
+      {/* Left Status Tag */}
+      <div className="flex items-center gap-2 text-[10px] font-mono text-zinc-400">
+        <span className="h-1.5 w-1.5 rounded-full bg-lime-400 animate-pulse" />
+        <span className="font-bold text-zinc-200">ECHODESK RUNTIME</span>
+        <span className="text-zinc-600">|</span>
+        <span className="text-zinc-400">{engineConnectionStatus}</span>
       </div>
 
-      {/* Right: Status indicators + controls */}
-      <div className="flex items-center gap-4">
-        {/* Live Simulation toggle */}
-        <div className="flex items-center gap-1.5">
-          <span className="text-[9px] uppercase tracking-wider text-zinc-500">Live Sim</span>
-          <button
-            onClick={toggleLiveSimulation}
-            className={cn(
-              "rounded px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider transition-colors",
-              liveSimulation ? "bg-emerald-500/20 text-emerald-300" : "bg-zinc-800 text-zinc-500"
-            )}
-          >
-            {liveSimulation ? "ON" : "OFF"}
-          </button>
+      {/* Center Title (GIGABYTE Control Center Style) */}
+      <div className="text-xs font-mono font-bold tracking-widest text-zinc-100">
+        ECHODESK Control Center
+      </div>
+
+      {/* Right Controls */}
+      <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1.5 rounded border border-zinc-800 bg-zinc-900/60 px-2 py-0.5 text-[9px] font-mono text-zinc-300">
+          <Cpu className="h-3 w-3 text-cyan-400" />
+          <span>{aiRuntime.accelerator}</span>
         </div>
 
-        {/* LOCAL AI indicator */}
-        <div className="flex items-center gap-1.5">
-          <StatusDot state="active" />
-          <span className="text-[9px] uppercase tracking-wider text-zinc-400">Local AI</span>
+        <div className="flex items-center gap-1.5 text-[9px] font-mono text-zinc-400">
+          <ShieldCheck className={privacy.privateMode ? "text-red-400" : "text-lime-400"} />
+          <span>{privacy.privateMode ? "PRIVATE MODE" : "ZERO CLOUD"}</span>
         </div>
 
-        {/* SENSING indicator */}
-        <div className="flex items-center gap-1.5">
-          <StatusDot state={sensingActive ? "active" : "off"} />
-          <span className="text-[9px] uppercase tracking-wider text-zinc-400">Sensing</span>
-        </div>
+        <span className="font-mono text-xs text-zinc-300 tabular-nums">{time}</span>
 
-        {/* PRIVATE MODE */}
-        <div className={cn(
-          "flex items-center gap-1.5 rounded px-2 py-0.5 transition-colors",
-          privacy.privateMode ? "bg-emerald-500/15 ring-1 ring-emerald-500/30" : ""
-        )}>
-          <ShieldCheck className={cn("h-3 w-3", privacy.privateMode ? "text-emerald-400" : "text-zinc-500")} />
-          <span className={cn(
-            "text-[9px] font-semibold uppercase tracking-wider",
-            privacy.privateMode ? "text-emerald-300" : "text-zinc-500"
-          )}>Private Mode</span>
-        </div>
-
-        {/* AI Runtime quick indicator */}
-        <div className="flex items-center gap-1.5">
-          <Cpu className="h-3 w-3 text-cyan-400/70" />
-          <span className="text-[9px] uppercase tracking-wider text-zinc-400">{aiRuntime.accelerator}</span>
-        </div>
-
-        {/* Time */}
-        <div className="flex items-center gap-1 text-zinc-400">
-          <Clock className="h-3 w-3" />
-          <span className="mono text-xs tabular-nums">{time}</span>
-        </div>
-
-        {/* Settings */}
         <Tooltip label="Settings" side="bottom">
-          <button className="rounded p-1 text-zinc-500 transition-colors hover:bg-zinc-800 hover:text-zinc-300">
+          <button onClick={() => setActiveNav("settings")} className="rounded p-1 text-zinc-400 hover:text-white transition-colors">
             <Settings className="h-3.5 w-3.5" />
           </button>
         </Tooltip>
 
-        {/* Background running control */}
-        <BackgroundPopover open={bgOpen} onToggle={() => setBgOpen(!bgOpen)} />
-
         {/* Window controls */}
-        <div className="flex items-center gap-1 border-l border-zinc-800 pl-3">
-          <button className="rounded p-1 text-zinc-500 transition-colors hover:bg-zinc-800 hover:text-zinc-300">
-            <Minus className="h-3 w-3" />
+        <div className="flex items-center gap-1.5 border-l border-zinc-800 pl-2">
+          <button className="text-zinc-400 hover:text-white p-1">
+            <Info className="h-3.5 w-3.5" />
           </button>
-          <button className="rounded p-1 text-zinc-500 transition-colors hover:bg-zinc-800 hover:text-zinc-300">
-            <Square className="h-2.5 w-2.5" />
+          <button onClick={handleMinimize} className="text-zinc-400 hover:text-white p-1">
+            <Minus className="h-3.5 w-3.5" />
           </button>
-          <button className="rounded p-1 text-zinc-500 transition-colors hover:bg-red-500/80 hover:text-white">
-            <X className="h-3 w-3" />
+          <button onClick={handleMaximize} className="text-zinc-400 hover:text-white p-1">
+            <Square className="h-3 w-3" />
+          </button>
+          <button onClick={handleClose} className="text-zinc-400 hover:text-red-400 p-1">
+            <X className="h-3.5 w-3.5" />
           </button>
         </div>
       </div>

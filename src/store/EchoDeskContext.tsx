@@ -31,6 +31,10 @@ interface EchoDeskState {
   activeNav: string;
   setActiveNav: (nav: string) => void;
 
+  // Connection
+  engineConnectionStatus: string;
+  setEngineConnectionStatus: (s: string) => void;
+
   // Context mode
   contextMode: ContextMode;
   setContextMode: (mode: ContextMode) => void;
@@ -45,6 +49,7 @@ interface EchoDeskState {
 
   // Sensors
   signals: SensorSignal[];
+  setSignals: React.Dispatch<React.SetStateAction<SensorSignal[]>>;
   toggleSensor: (id: string) => void;
 
   // Semantic events
@@ -52,21 +57,23 @@ interface EchoDeskState {
 
   // System status
   systemStatus: SystemStatus;
-  setSystemStatus: (s: SystemStatus) => void;
+  setSystemStatus: React.Dispatch<React.SetStateAction<SystemStatus>>;
 
   // AI Runtime
   aiRuntime: AIRuntime;
-  setAIRuntime: (r: AIRuntime) => void;
+  setAIRuntime: React.Dispatch<React.SetStateAction<AIRuntime>>;
   models: AIModel[];
 
   // Timeline
   timeline: TimelineEvent[];
+  setTimelineEvents: (events: TimelineEvent[]) => void;
 
   // Privacy
   privacy: PrivacyState;
   setPrivacy: (p: PrivacyState) => void;
   togglePrivateMode: () => void;
   protectedApps: ProtectedApp[];
+  setProtectedApps: (apps: ProtectedApp[]) => void;
   toggleProtectedApp: (id: string) => void;
   addProtectedApp: (name: string) => void;
   removeProtectedApp: (id: string) => void;
@@ -75,9 +82,11 @@ interface EchoDeskState {
   background: BackgroundStatus;
   setBackground: (b: BackgroundStatus) => void;
 
-  // Settings
+  // Settings & Simulation
   liveSimulation: boolean;
   toggleLiveSimulation: () => void;
+  devScenario: string;
+  setDevScenario: (scenario: string) => void;
   settings: Record<string, boolean>;
   toggleSetting: (key: string) => void;
 
@@ -94,6 +103,7 @@ const EchoDeskContext = createContext<EchoDeskState | null>(null);
 
 export function EchoDeskProvider({ children }: { children: ReactNode }) {
   const [activeNav, setActiveNav] = useState("system");
+  const [engineConnectionStatus, setEngineConnectionStatus] = useState("SEARCHING ENGINE...");
   const [contextMode, setContextModeState] = useState<ContextMode>("DEEP FOCUS");
   const [samplingMode, setSamplingMode] = useState<SamplingMode>("BALANCED");
   const [signals, setSignals] = useState<SensorSignal[]>(initialSignals);
@@ -101,11 +111,12 @@ export function EchoDeskProvider({ children }: { children: ReactNode }) {
   const [systemStatus, setSystemStatus] = useState<SystemStatus>(initialSystemStatus);
   const [aiRuntime, setAIRuntime] = useState<AIRuntime>(initialAIRuntime);
   const [models] = useState<AIModel[]>(initialModels);
-  const [timeline] = useState<TimelineEvent[]>(initialTimeline);
+  const [timeline, setTimeline] = useState<TimelineEvent[]>(initialTimeline);
   const [privacy, setPrivacy] = useState<PrivacyState>(initialPrivacy);
   const [protectedApps, setProtectedApps] = useState<ProtectedApp[]>(initialProtectedApps);
   const [background, setBackground] = useState<BackgroundStatus>(initialBackground);
   const [liveSimulation, setLiveSimulation] = useState(true);
+  const [devScenario, setDevScenarioState] = useState("Deep Coding Session");
   const [settings, setSettings] = useState<Record<string, boolean>>({
     launchAtStartup: true,
     minimizeToTray: true,
@@ -154,6 +165,21 @@ export function EchoDeskProvider({ children }: { children: ReactNode }) {
       setSignals(initialSignals);
     }
   }, []);
+
+  const setDevScenario = useCallback((scenario: string) => {
+    setDevScenarioState(scenario);
+    if (scenario === "Deep Coding Session") {
+      setContextMode("DEEP FOCUS");
+    } else if (scenario === "Zoom Meeting") {
+      setContextMode("MEETING");
+    } else if (scenario === "Team Collaboration") {
+      setContextMode("COLLABORATION");
+    } else if (scenario === "On Break") {
+      setContextMode("BALANCED");
+    } else if (scenario === "Protected App Active") {
+      setContextMode("PRIVATE");
+    }
+  }, [setContextMode]);
 
   const toggleSensor = useCallback((id: string) => {
     setSignals((prev) =>
@@ -206,6 +232,8 @@ export function EchoDeskProvider({ children }: { children: ReactNode }) {
   const value: EchoDeskState = {
     activeNav,
     setActiveNav,
+    engineConnectionStatus,
+    setEngineConnectionStatus,
     contextMode,
     setContextMode,
     currentContext: modeData.context as ContextState,
@@ -215,6 +243,7 @@ export function EchoDeskProvider({ children }: { children: ReactNode }) {
     samplingMode,
     setSamplingMode,
     signals,
+    setSignals,
     toggleSensor,
     events,
     systemStatus,
@@ -223,10 +252,12 @@ export function EchoDeskProvider({ children }: { children: ReactNode }) {
     setAIRuntime,
     models,
     timeline,
+    setTimelineEvents: setTimeline,
     privacy,
     setPrivacy,
     togglePrivateMode,
     protectedApps,
+    setProtectedApps,
     toggleProtectedApp,
     addProtectedApp,
     removeProtectedApp,
@@ -234,6 +265,8 @@ export function EchoDeskProvider({ children }: { children: ReactNode }) {
     setBackground,
     liveSimulation,
     toggleLiveSimulation,
+    devScenario,
+    setDevScenario,
     settings,
     toggleSetting,
     selectedTimelineEvent,

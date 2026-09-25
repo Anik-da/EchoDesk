@@ -1,44 +1,98 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useEchoDesk } from "@/store/EchoDeskContext";
-
-const samplingHz: Record<string, number> = { "LOW POWER": 1, BALANCED: 5, "REAL-TIME": 10 };
-const latencyRange: Record<string, [number, number]> = { "LOW POWER": [45, 60], BALANCED: [28, 38], "REAL-TIME": [18, 28] };
-
-function clamp(v: number, min: number, max: number) {
-  return Math.max(min, Math.min(max, v));
-}
-
-function jitter(base: number, range: number, min: number, max: number) {
-  return clamp(base + (Math.random() - 0.5) * range, min, max);
-}
+import { BackendBridge, BackendSnapshot } from "@/services/backendBridge";
 
 export function useLiveSimulation() {
-  const { liveSimulation, samplingMode, systemStatus, setSystemStatus, aiRuntime, setAIRuntime, contextMode, contextConfidence } = useEchoDesk();
+  const {
+    liveSimulation,
+    samplingMode,
+    systemStatus,
+    setSystemStatus,
+    aiRuntime,
+    setAIRuntime,
+    contextMode,
+    privacy,
+    setPrivacy,
+    setBackground,
+    setProtectedApps,
+    setTimelineEvents,
+    setEngineConnectionStatus
+  } = useEchoDesk();
 
+  const phaseRef = useRef(0);
+
+  // 1. Try real Python backend connection via SSE
+  useEffect(() => {
+    let connected = false;
+
+    BackendBridge.subscribeToUpdates(
+      (snapshot: BackendSnapshot) => {
+        connected = true;
+        setEngineConnectionStatus("ONLINE (PYTHON BACKEND)");
+        
+        // Sync system status
+        setSystemStatus((prev) => ({
+          ...prev,
+          cpu: snapshot.telemetry.cpu,
+          gpu: snapshot.telemetry.gpu,
+          ramUsed: snapshot.telemetry.ram,
+          cpuTemp: snapshot.telemetry.temp,
+        }));
+
+        // Sync AI Runtime
+        setAIRuntime((prev) => ({
+          ...prev,
+          inferenceLatency: snapshot.inferenceLatency,
+          accelerator: "NPU",
+          status: "ACTIVE"
+        }));
+
+        // Sync Privacy & Apps if available
+        if (snapshot.protectedApps && snapshot.protectedApps.length > 0) {
+          setProtectedApps(snapshot.protectedApps);
+        }
+        if (snapshot.timelineEvents && snapshot.timelineEvents.length > 0) {
+          setTimelineEvents(snapshot.timelineEvents);
+        }
+      },
+      () => {
+        connected = false;
+        setEngineConnectionStatus("OFFLINE (DEV SIMULATION)");
+      }
+    );
+
+    return () => BackendBridge.disconnect();
+  }, [setSystemStatus, setAIRuntime, setProtectedApps, setTimelineEvents, setEngineConnectionStatus]);
+
+  // 2. Smooth simulated telemetry loop for Dev mode fallback
   useEffect(() => {
     if (!liveSimulation || contextMode === "PRIVATE") return;
+
     const interval = setInterval(() => {
-      const hz = samplingHz[samplingMode];
-      const [latMin, latMax] = latencyRange[samplingMode];
+      phaseRef.current += 0.2;
+      const p = phaseRef.current;
 
-      setSystemStatus({
-        ...systemStatus,
-        cpu: jitter(systemStatus.cpu, 6, 8, 35),
-        gpu: jitter(systemStatus.gpu, 4, 5, 25),
-        ramUsed: jitter(systemStatus.ramUsed, 0.3, 7.8, 9.2),
-        cpuFanRpm: Math.round(jitter(systemStatus.cpuFanRpm, 200, 2000, 3200)),
-        cpuTemp: Math.round(jitter(systemStatus.cpuTemp, 3, 42, 52)),
-        gpuTemp: Math.round(jitter(systemStatus.gpuTemp, 2, 40, 48)),
-      });
+      const smoothCpu = Math.round((18 + Math.sin(p * 0.4) * 6 + Math.cos(p * 0.7) * 2) * 10) / 10;
+      const smoothGpu = Math.round((12 + Math.sin(p * 0.5) * 4) * 10) / 10;
+      const smoothRam = Math.round((8.1 + Math.sin(p * 0.2) * 0.3) * 10) / 10;
 
-      setAIRuntime({
-        ...aiRuntime,
-        inferenceLatency: Math.round(jitter(aiRuntime.inferenceLatency, 4, latMin, latMax)),
-        cpuOverhead: Math.round(jitter(aiRuntime.cpuOverhead, 3, 10, 20)),
-        memory: Math.round(jitter(aiRuntime.memory, 8, 170, 210)),
-      });
-    }, 3000);
+      setSystemStatus((prev) => ({
+        ...prev,
+        cpu: smoothCpu,
+        gpu: smoothGpu,
+        ramUsed: smoothRam,
+        cpuTemp: Math.round(44 + Math.sin(p * 0.3) * 3),
+        gpuTemp: Math.round(41 + Math.cos(p * 0.3) * 2),
+      }));
+
+      setAIRuntime((prev) => ({
+        ...prev,
+        inferenceLatency: Math.round(28 + Math.sin(p * 0.6) * 4),
+        cpuOverhead: Math.round(14 + Math.cos(p * 0.4) * 3),
+        memory: Math.round(186 + Math.sin(p * 0.2) * 8),
+      }));
+    }, 2000);
 
     return () => clearInterval(interval);
-  }, [liveSimulation, samplingMode, contextMode, systemStatus, aiRuntime, setSystemStatus, setAIRuntime]);
+  }, [liveSimulation, contextMode, setSystemStatus, setAIRuntime]);
 }

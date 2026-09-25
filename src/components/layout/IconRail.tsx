@@ -17,7 +17,7 @@ export function IconRail() {
   const { activeNav, setActiveNav } = useEchoDesk();
 
   return (
-    <nav className="flex w-14 flex-col items-center gap-1 border-r border-zinc-800 bg-zinc-950/80 py-2">
+    <nav className="flex w-14 flex-col items-center gap-2 border-r border-[#1f2229] bg-[#090a0d] py-3 select-none">
       {navItems.map((item) => {
         const Icon = item.icon;
         const active = activeNav === item.id;
@@ -26,15 +26,14 @@ export function IconRail() {
             <button
               onClick={() => setActiveNav(item.id)}
               className={cn(
-                "relative flex h-10 w-10 items-center justify-center rounded transition-all",
-                "focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/50",
+                "relative flex h-10 w-10 items-center justify-center rounded transition-all duration-150",
                 active
-                  ? "bg-emerald-500/10 text-emerald-400"
-                  : "text-zinc-500 hover:bg-zinc-800/60 hover:text-zinc-300"
+                  ? "bg-lime-500/20 text-lime-400 border border-lime-500/50 shadow-md shadow-lime-500/10"
+                  : "text-zinc-500 hover:bg-zinc-800/60 hover:text-zinc-200"
               )}
             >
               {active && (
-                <span className="absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-r bg-emerald-400" />
+                <span className="absolute left-0 top-1/2 h-6 w-1 -translate-y-1/2 rounded-r bg-lime-400" />
               )}
               <Icon className="h-4.5 w-4.5" strokeWidth={active ? 2.2 : 1.8} />
             </button>

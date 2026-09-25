@@ -1,51 +1,68 @@
-import { Camera, Mic, Monitor, Keyboard } from "lucide-react";
+import { Camera, Mic, Monitor, Keyboard, Shield } from "lucide-react";
 import { useEchoDesk } from "@/store/EchoDeskContext";
-import { Switch } from "@/components/ui/Switch";
-import { StatusDot } from "@/components/ui/StatusDot";
 import { cn } from "@/utils/cn";
 
-const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
-  Camera,
-  Mic,
-  Monitor,
-  Keyboard,
-};
-
 export function ContextSignals() {
-  const { signals, toggleSensor, setSelectedSignal } = useEchoDesk();
+  const { signals, toggleSensor, privacy, togglePrivateMode } = useEchoDesk();
 
   return (
-    <div className="space-y-1.5">
-      {signals.map((s) => {
-        const Icon = iconMap[s.icon] ?? Camera;
-        return (
-          <div
-            key={s.id}
-            className="group flex items-center gap-2.5 rounded border border-zinc-800/60 bg-zinc-950/30 px-2 py-1.5 transition-colors hover:border-zinc-700"
-            onClick={() => setSelectedSignal(s)}
-            role="button"
-          >
-            <Icon className={cn("h-3.5 w-3.5 flex-shrink-0", s.enabled ? "text-zinc-400" : "text-zinc-700")} />
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1.5">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">{s.label}</span>
-                <StatusDot state={s.state} />
-              </div>
-              <div className="text-[9px] text-zinc-600 truncate">{s.description}</div>
-            </div>
-            {/* Activity bar */}
-            <div className="w-8 h-1 rounded-full bg-zinc-800 overflow-hidden flex-shrink-0">
-              <div
-                className="h-full rounded-full bg-emerald-400/60 transition-all duration-500"
-                style={{ width: `${s.activityLevel}%` }}
-              />
-            </div>
-            <div onClick={(e) => e.stopPropagation()}>
-              <Switch checked={s.enabled} onChange={() => toggleSensor(s.id)} size="sm" />
-            </div>
-          </div>
-        );
-      })}
+    <div className="gcc-module rounded p-2.5 font-mono text-xs select-none space-y-2">
+      <div className="text-[9px] uppercase tracking-wider text-zinc-400 border-l-2 border-lime-400 pl-1.5 font-bold">
+        Context Signals Preference
+      </div>
+
+      {/* Grid of Square Toggle Tiles (GIGABYTE Preference Module Style) */}
+      <div className="grid grid-cols-2 gap-2">
+        {signals.map((sig) => {
+          const icons: Record<string, any> = { camera: Camera, microphone: Mic, screen: Monitor, activity: Keyboard };
+          const Icon = icons[sig.id] || Camera;
+          const active = sig.enabled && !privacy.privateMode;
+
+          return (
+            <button
+              key={sig.id}
+              onClick={() => toggleSensor(sig.id)}
+              className={cn(
+                "flex flex-col items-center justify-center p-2 rounded border transition-all duration-150",
+                active
+                  ? "border-lime-500/50 bg-lime-500/10 text-lime-400 shadow-sm"
+                  : "border-zinc-800/80 bg-zinc-950/40 text-zinc-600 hover:border-zinc-700"
+              )}
+            >
+              <Icon className="h-4 w-4 mb-1" />
+              <span className="text-[9px] font-bold uppercase truncate">{sig.label}</span>
+              <span className={cn(
+                "mt-0.5 rounded px-1 text-[8px] font-bold uppercase",
+                active ? "bg-lime-500/20 text-lime-400" : "bg-zinc-900 text-zinc-600"
+              )}>
+                {active ? "ACTIVE" : "OFF"}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Private Mode Tile */}
+      <button
+        onClick={togglePrivateMode}
+        className={cn(
+          "w-full flex items-center justify-between p-2 rounded border transition-all duration-150 text-[9px] uppercase font-bold",
+          privacy.privateMode
+            ? "border-red-500/50 bg-red-500/10 text-red-400"
+            : "border-zinc-800 bg-zinc-950/40 text-zinc-400 hover:border-zinc-700"
+        )}
+      >
+        <div className="flex items-center gap-1.5">
+          <Shield className="h-3.5 w-3.5" />
+          <span>PRIVATE MODE</span>
+        </div>
+        <span className={cn(
+          "rounded px-1.5 py-0.5 text-[8px]",
+          privacy.privateMode ? "bg-red-500/20 text-red-400" : "bg-zinc-900 text-zinc-500"
+        )}>
+          {privacy.privateMode ? "ON" : "OFF"}
+        </span>
+      </button>
     </div>
   );
 }
