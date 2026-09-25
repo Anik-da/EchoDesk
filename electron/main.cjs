@@ -71,13 +71,26 @@ function createWindow() {
   if (isDev) {
     mainWindow.loadURL("http://localhost:5173");
   } else {
-    const htmlPath = path.join(__dirname, "..", "dist", "index.html");
+    let htmlPath = path.join(__dirname, "..", "dist", "index.html");
+    if (!require("fs").existsSync(htmlPath)) {
+      htmlPath = path.join(process.resourcesPath, "app", "dist", "index.html");
+    }
+    if (!require("fs").existsSync(htmlPath)) {
+      htmlPath = path.join(process.resourcesPath, "dist", "index.html");
+    }
+
     if (require("fs").existsSync(htmlPath)) {
+      console.log("[Electron] Loading UI bundle from:", htmlPath);
       mainWindow.loadFile(htmlPath);
     } else {
+      console.warn("[Electron] Production bundle not found, falling back to localhost:5173");
       mainWindow.loadURL("http://localhost:5173");
     }
   }
+
+  mainWindow.webContents.on("did-fail-load", (event, errorCode, errorDescription, validatedURL) => {
+    console.error(`[Electron] Failed to load URL: ${validatedURL}, Error: ${errorDescription} (${errorCode})`);
+  });
 
   mainWindow.on("closed", () => {
     mainWindow = null;
