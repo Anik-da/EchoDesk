@@ -114,13 +114,14 @@ flowchart TD
 
 ### Download EchoDesk for Windows
 
-Get the latest Windows desktop release build:
+Get the latest Windows desktop release package:
 
-- **[Download EchoDesk for Windows](https://github.com/Anik-da/EchoDesk/releases/latest)**
+- 📦 **[Download EchoDesk v1.0.0 for Windows (ZIP Package)](https://github.com/Anik-da/EchoDesk/releases/download/v1.0.0/EchoDesk-Windows-v1.0.0.zip)**
+- 🚀 **[View All Releases on GitHub](https://github.com/Anik-da/EchoDesk/releases/latest)**
 
 ### Latest Release
 
-- **[Download the latest version (v1.0.0)](https://github.com/Anik-da/EchoDesk/releases/tag/v1.0.0)**
+- **[Release Notes & Changelog (v1.0.0)](https://github.com/Anik-da/EchoDesk/releases/tag/v1.0.0)**
 
 ---
 
