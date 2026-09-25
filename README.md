@@ -87,72 +87,72 @@ EchoDesk is built from the ground up with a strict **Local-First, Zero-Trust Pri
 
 ---
 
+---
+
 ## Architecture
 
-```mermaid
-flowchart TD
-    UI["React UI (Control Center)"]
-    Electron["Electron App Shell"]
-    Engine["Python Local Engine"]
-    Sensors["Hardware Sensors (Camera, Mic, Screen, Activity)"]
-    AIRuntime["AI Runtime Abstraction (ONNX / CPU / GPU / NPU)"]
-    ContextEng["Context Engine (Temporal Hysteresis)"]
-    Events["Semantic Event Storage (SQLite)"]
-
-    UI <--> Electron
-    Electron <--> Engine
-    Engine --> Sensors
-    Sensors --> AIRuntime
-    AIRuntime --> ContextEng
-    ContextEng --> Events
-    Events --> UI
+```text
+                 ECHODESK
+                     │
+              React Frontend
+                     │
+               Electron Shell
+                     │
+              Platform Adapter
+                     │
+        ┌────────────┼────────────┐
+        │            │            │
+     Windows       macOS        Linux
+        │            │            │
+        └────────────┼────────────┘
+                     │
+              Hardware Layer
+                     │
+              AI Runtime Layer
+                     │
+              Context Engine
+                     │
+               Local Storage
 ```
 
 ---
 
-## Windows Installation
+## DOWNLOAD ECHODESK
 
-### Download EchoDesk for Windows
+EchoDesk is packaged for Windows, macOS, and Linux desktop environments from the official GitHub Release distribution point.
 
-Get the latest Windows desktop release package:
+### Windows (x64 / ARM64)
+- 📦 **[Download Windows Release Package (.zip / .exe)](https://github.com/Anik-da/EchoDesk/releases/download/v1.0.0/EchoDesk-Windows-v1.0.0.zip)**
+- Supports Windows 10/11 on Intel/AMD x64 and Qualcomm Snapdragon ARM64 devices.
 
-- 📦 **[Download EchoDesk v1.0.0 for Windows (ZIP Package)](https://github.com/Anik-da/EchoDesk/releases/download/v1.0.0/EchoDesk-Windows-v1.0.0.zip)**
-- 🚀 **[View All Releases on GitHub](https://github.com/Anik-da/EchoDesk/releases/latest)**
+### macOS (Intel & Apple Silicon)
+- 🍏 **[Download macOS (.dmg / .zip)](https://github.com/Anik-da/EchoDesk/releases/tag/v1.0.0)**
+- Universal support for Apple Silicon (M1/M2/M3/M4 via CoreML & Metal) and Intel Macs.
+
+### Linux (x64 / ARM64)
+- 🐧 **[Download Linux (AppImage / .deb)](https://github.com/Anik-da/EchoDesk/releases/tag/v1.0.0)**
+- Portable AppImage and Debian package with native X11/Wayland context detection and CUDA/CPU acceleration.
 
 ### Latest Release
-
 - **[Release Notes & Changelog (v1.0.0)](https://github.com/Anik-da/EchoDesk/releases/tag/v1.0.0)**
 
 ---
 
-## Installation
+## Cross-Device Hardware Detection
 
-1. Download `EchoDesk-Windows-v1.0.0.zip` or `EchoDesk.exe` from the [Latest Release](https://github.com/Anik-da/EchoDesk/releases/latest).
-2. Extract the ZIP package into a local directory (e.g., `C:\Program Files\EchoDesk` or `C:\Users\<User>\AppData\Local\EchoDesk`).
-3. Run `EchoDesk.exe` to launch the standalone desktop application.
-4. EchoDesk will initialize the low-overhead background engine and open the Control Center dashboard.
+EchoDesk dynamically queries the actual physical hardware and operating system of the host device:
 
----
-
-## Development Machine
-
-The current primary development and testing environment is a **GIGABYTE G6** laptop:
-
-- **OS**: Windows 11 Home / Pro (x64)
-- **CPU**: Intel Core processor
-- **GPU**: NVIDIA GeForce RTX Laptop GPU
-- **NPU**: *Not present on standard x86 GIGABYTE G6 hardware*
-
-> **Note**: On the GIGABYTE G6 development machine, EchoDesk correctly detects the system configuration and operates in **x86 CPU/GPU Execution Provider Mode**. It does **not** falsely claim Snapdragon NPU availability.
+1. **Device Identity**: Sourced directly from BIOS/WMI (Windows), `sysctl`/`system_profiler` (macOS), or DMI sysfs (Linux).
+2. **CPU & Memory**: Real core counts, logical threads, vendor, and live utilization measured without estimation.
+3. **GPU Acceleration**: Sourced from `nvidia-smi` (NVIDIA CUDA), Metal/CoreML (macOS), or platform display controllers.
+4. **Thermal & Fans**: Only verified telemetry is displayed; unsupported or unexposed sensors are explicitly labeled `Unavailable`.
+5. **Snapdragon NPU**: Conditional execution provider; only activated when running on genuine Qualcomm Snapdragon ARM64 systems with QNN runtimes. On Intel/AMD or Apple Silicon devices, EchoDesk honestly reports `NPU: Not detected on this device`.
 
 ---
 
-## Snapdragon / Qualcomm Acceleration
+## Development Environment & Portability
 
-EchoDesk features a modular AI Runtime Abstraction Layer designed for next-generation Copilot+ PCs powered by **Qualcomm Snapdragon X Elite / Plus** processors:
-
-- When executed on a Snapdragon device with Qualcomm Neural Processing SDK (QNN) drivers installed, EchoDesk automatically selects the **Hexagon NPU** execution provider for hardware-accelerated, ultra-low-power context inference.
-- On standard x86 Intel/AMD machines (such as the GIGABYTE G6), EchoDesk gracefully falls back to **CPU/CUDA acceleration** while clearly displaying `Snapdragon NPU: Not available` in the system telemetry panel.
+The development machine used during engineering was a **GIGABYTE G6** laptop (Intel i7-13620H, RTX 4060, Windows 11). **No development-machine values are hardcoded in the production runtime.** When EchoDesk is installed on another machine (e.g. a Dell laptop, MacBook Pro, or ThinkPad on Ubuntu), it automatically detects and presents that computer's real hardware specifications.
 
 ---
 

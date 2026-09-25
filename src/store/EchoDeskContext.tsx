@@ -12,6 +12,7 @@ import type {
   ProtectedApp,
   PrivacyState,
   BackgroundStatus,
+  DeviceSystemInfo,
 } from "@/types";
 import {
   modeContextMap,

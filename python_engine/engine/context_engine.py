@@ -221,12 +221,12 @@ class ContextEngine:
                 "gpuTemp": primary_gpu_temp,             # Real GPU temp if NVIDIA, else None
                 "cpuFanRpm": sys_data["thermal"]["cpu_fan_rpm"],  # None -> UI renders "Unavailable"
                 "gpuFanRpm": sys_data["thermal"]["gpu_fan_rpm"],  # None -> UI renders "Unavailable"
-                "battery": sys_data["battery"]["percent"],
-                "powerConnected": sys_data["battery"]["charging"],
-                "powerState": sys_data["battery"]["power_state"],
-                "npuAvailable": sys_data["ai_runtime"]["npu_available"],
-                "qnnAvailable": sys_data["ai_runtime"]["qnn_available"],
-                "aiProvider": sys_data["ai_runtime"]["provider"],
+                "battery": sys_data["battery"].get("percent"),
+                "powerConnected": sys_data["battery"].get("charging"),
+                "powerState": sys_data["battery"].get("status") or sys_data["battery"].get("power_state") or ("AC Connected" if sys_data["battery"].get("charging") else "Battery"),
+                "npuAvailable": sys_data["ai_runtime"].get("npu_available", False),
+                "qnnAvailable": sys_data["ai_runtime"].get("qnn_available", False),
+                "aiProvider": sys_data["ai_runtime"].get("provider", "CPU"),
                 "telemetryMode": "LIVE HARDWARE"
             }
         else:

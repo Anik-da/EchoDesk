@@ -2,11 +2,27 @@ import sqlite3
 import os
 import json
 import time
+import shutil
+from platform import get_platform_adapter
 
-DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "echodesk.db")
+def get_database_path() -> str:
+    """Returns the OS-specific application data path for the EchoDesk SQLite database."""
+    app_data_dir = get_platform_adapter().get_app_data_dir()
+    os.makedirs(app_data_dir, exist_ok=True)
+    target_db = os.path.join(app_data_dir, "echodesk.db")
+
+    # Migrate legacy local database if present and target does not exist
+    legacy_db = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "echodesk.db")
+    if not os.path.exists(target_db) and os.path.exists(legacy_db):
+        try:
+            shutil.copy2(legacy_db, target_db)
+        except Exception:
+            pass
+
+    return target_db
 
 def get_db_connection():
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(get_database_path())
     conn.row_factory = sqlite3.Row
     return conn
 

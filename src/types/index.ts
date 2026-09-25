@@ -80,9 +80,14 @@ export interface DeviceSystemInfo {
   manufacturer: string;
   model: string;
   os: string;
+  os_name?: string;
+  os_version?: string;
   architecture: string;
+  platform_string?: string;
   cpu: {
     name: string;
+    vendor?: string;
+    architecture?: string;
     cores: number;
     threads: number;
     usage_percent: number;
@@ -95,6 +100,7 @@ export interface DeviceSystemInfo {
   };
   gpu: Array<{
     name: string;
+    driver?: string;
     usage_percent: number | null;
     temperature_c: number | null;
     memory_used_mb: number | null;
@@ -102,8 +108,11 @@ export interface DeviceSystemInfo {
     status: string;
   }>;
   storage: Array<{
-    device: string;
-    mountpoint: string;
+    device?: string;
+    mountpoint?: string;
+    drive?: string;
+    mount?: string;
+    filesystem?: string;
     total_gb: number;
     used_gb: number;
     free_gb: number;
@@ -115,6 +124,8 @@ export interface DeviceSystemInfo {
     charging: boolean | null;
     power_plugged: boolean;
     power_state: string;
+    seconds_left?: number | null;
+    status?: string;
   };
   thermal: {
     cpu_c: number | null;
@@ -125,10 +136,15 @@ export interface DeviceSystemInfo {
   };
   ai_runtime: {
     provider: string;
+    device_type?: string;
+    available?: boolean;
+    supported?: boolean;
     npu_available: boolean;
     qnn_available: boolean;
+    reason?: string | null;
     inference_latency_ms: number | null;
   };
+  capabilities?: Record<string, string>;
 }
 
 export interface AIModel {

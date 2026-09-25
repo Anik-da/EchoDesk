@@ -102,25 +102,20 @@ class ContextModel(BaseModel):
 
 def get_hardware_capabilities() -> dict:
     """Hardware capability detection for host system."""
-    arch = platform.machine()
+    from hardware.cpu import get_cpu_info
+    from ai_runtime import get_best_ai_runtime
 
-    has_qnn = "QNNExecutionProvider" in ONNX_PROVIDERS
-    has_npu = has_qnn
-
-    if CUDA_AVAILABLE:
-        provider = "CUDA"
-    elif "DirectMLExecutionProvider" in ONNX_PROVIDERS:
-        provider = "DirectML"
-    else:
-        provider = "CPU"
+    cpu_info = get_cpu_info()
+    rt = get_best_ai_runtime()
+    rt_status = rt.get_status()
 
     return {
-        "hardware": "Intel CPU / NVIDIA GPU (GIGABYTE G6)",
-        "architecture": arch,
-        "provider": provider,
-        "npuAvailable": has_npu,
-        "qnnAvailable": has_qnn,
+        "hardware": f"{cpu_info.get('name', 'CPU')} ({cpu_info.get('architecture', 'x64')})",
+        "architecture": cpu_info.get("architecture", "x64"),
+        "provider": rt.provider_name,
+        "npuAvailable": rt_status.get("npu_available", False),
+        "qnnAvailable": rt_status.get("qnn_available", False),
         "onnxProviders": ONNX_PROVIDERS,
         "cudaAvailable": CUDA_AVAILABLE,
-        "mode": "development"
+        "mode": "live"
     }

@@ -14,19 +14,30 @@ export function DashboardPage() {
   const [showDeviceModal, setShowDeviceModal] = useState(false);
 
   const isLive = telemetryMode === "LIVE";
-  const mfg = deviceInfo?.manufacturer ?? "GIGABYTE";
-  const model = deviceInfo?.model ?? "G6 KF";
-  const cpu = deviceInfo?.cpu?.name ?? "Intel Core i7-13620H";
+  const mfg = deviceInfo?.manufacturer || "Detecting Device...";
+  const model = deviceInfo?.model || "";
+  const osName = deviceInfo?.os_name || deviceInfo?.os || "Desktop OS";
+  const arch = deviceInfo?.architecture || "";
+  const cpu = deviceInfo?.cpu?.name || "Detecting CPU...";
+  const primaryGpu = deviceInfo?.gpu?.[0]?.name;
 
   return (
     <div className="flex h-full flex-col gap-2 overflow-y-auto p-3 select-none">
-      {/* Hardware Subheader Banner (GIGABYTE Control Center Style) */}
+      {/* Hardware Subheader Banner */}
       <div className="flex items-center justify-between border-b border-[#1f2229] pb-1.5 px-1 font-mono text-[10px] text-zinc-400">
         <div className="flex items-center gap-2">
-          <span className="text-zinc-200 font-bold uppercase tracking-wider">System:</span>
-          <span className="text-zinc-300 font-semibold">{mfg} {model}</span>
+          <span className="text-cyan-400 font-bold uppercase tracking-wider">THIS DEVICE:</span>
+          <span className="text-zinc-200 font-semibold">{mfg} {model}</span>
+          <span className="text-zinc-600">|</span>
+          <span className="text-zinc-300">{osName} {arch ? `(${arch})` : ""}</span>
           <span className="text-zinc-600">|</span>
           <span className="text-zinc-400 truncate max-w-xs">{cpu}</span>
+          {primaryGpu && (
+            <>
+              <span className="text-zinc-600">|</span>
+              <span className="text-zinc-400 truncate max-w-xs">{primaryGpu}</span>
+            </>
+          )}
           <button
             onClick={() => setShowDeviceModal(true)}
             className="ml-2 inline-flex items-center gap-1 px-1.5 py-0.5 rounded border border-zinc-700 bg-zinc-800/80 hover:bg-zinc-700 text-[9px] text-zinc-200 transition-colors"

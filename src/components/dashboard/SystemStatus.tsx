@@ -51,7 +51,9 @@ export function SystemStatus() {
               <span className="absolute text-[10px] font-bold text-zinc-100">{storagePct !== null ? `${storagePct}%` : "--"}</span>
             </div>
             <div>
-              <div className="text-[9px] uppercase text-zinc-400">Storage (C:)</div>
+              <div className="text-[9px] uppercase text-zinc-400 truncate max-w-[100px]" title={deviceInfo?.storage?.[0]?.drive || "Primary Volume"}>
+                {deviceInfo?.storage?.[0]?.drive || "Storage"}
+              </div>
               <div className="text-[10px] font-bold text-zinc-200">
                 {s.storageUsed !== null && s.storageTotal ? `${s.storageUsed} / ${s.storageTotal} GB` : "Unavailable"}
               </div>

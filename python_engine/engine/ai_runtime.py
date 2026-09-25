@@ -1,21 +1,27 @@
 import time
-import platform
+from ai_runtime import get_best_ai_runtime
+from hardware.cpu import get_cpu_info
 
 class AIRuntimeEngine:
     def __init__(self):
-        self.accelerator = "CPU/GPU (DirectML/CUDA)"
-        self.status = "FALLBACK"
-        self.hardware = f"{platform.processor() or 'Intel CPU / NVIDIA GPU (GIGABYTE G6)'}"
-        self.snapdragon_npu = "Not Available (x86_64 Host)"
-        self.execution_mode = "Development / Fallback"
+        self._rt = get_best_ai_runtime()
+        cpu_info = get_cpu_info()
+        self.hardware = f"{cpu_info.get('name', 'CPU')} / {self._rt.provider_name}"
+        self.accelerator = self._rt.provider_name
+        self.status = "ONLINE" if self._rt.is_available() else "FALLBACK"
+        npu_avail = self._rt.get_status().get("npu_available", False)
+        self.snapdragon_npu = "Available" if npu_avail else "Not available on this device"
+        self.execution_mode = "Hardware Acceleration" if self._rt.device_type != "CPU" else "CPU Fallback"
         self.active_model = "TinyLlama-1.1B-Context (ONNX)"
 
     def get_hardware_info(self):
+        status = self._rt.get_status()
+        cpu_info = get_cpu_info()
         return {
-            "hardware": "Intel CPU / NVIDIA GPU (GIGABYTE G6)",
-            "accelerator": "CPU/GPU",
-            "snapdragonNpu": "Not Available",
-            "executionMode": "Development / Fallback",
+            "hardware": f"{cpu_info.get('name', 'CPU')} ({cpu_info.get('architecture', 'x64')})",
+            "accelerator": self._rt.provider_name,
+            "snapdragonNpu": "Available" if status.get("npu_available") else "Not available on this device",
+            "executionMode": "Hardware Acceleration" if self._rt.device_type != "CPU" else "CPU Fallback",
             "activeModel": self.active_model
         }
 

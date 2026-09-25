@@ -162,6 +162,7 @@ def run():
     print("Default Mode: LIVE HARDWARE")
     print("==================================================")
     print(f"[EchoDesk Engine] Python Background Service listening on http://127.0.0.1:{PORT}")
+    socketserver.TCPServer.allow_reuse_address = True
     server = socketserver.TCPServer(("127.0.0.1", PORT), EchoDeskHandler)
     try:
         server.serve_forever()

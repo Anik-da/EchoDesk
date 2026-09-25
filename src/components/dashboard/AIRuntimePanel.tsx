@@ -7,6 +7,10 @@ export function AIRuntimePanel() {
   const provider = aiRuntime.provider || (deviceInfo?.ai_runtime?.provider ?? "CPU");
   const latencyStr = aiRuntime.inferenceLatency !== null ? `${aiRuntime.inferenceLatency} ms` : "Unavailable";
 
+  const isGpu = provider.toLowerCase().includes("cuda") || provider.toLowerCase().includes("directml") || provider.toLowerCase().includes("gpu") || provider.toLowerCase().includes("metal") || provider.toLowerCase().includes("coreml");
+  const execLabel = isNpuActive ? "NPU Native" : (isGpu ? "GPU Accelerated" : "CPU Fallback");
+  const stateLabel = isNpuActive ? "ACTIVE (NPU)" : (isGpu ? "ACTIVE (GPU)" : "CPU FALLBACK");
+
   return (
     <div className="gcc-module rounded p-2.5 font-mono text-xs select-none space-y-2">
       <div className="text-[9px] uppercase tracking-wider text-zinc-400 border-l-2 border-cyan-400 pl-1.5 font-bold flex items-center justify-between">
@@ -19,12 +23,12 @@ export function AIRuntimePanel() {
       <div className="grid grid-cols-2 gap-2 text-[10px]">
         <div className="rounded border border-zinc-800/80 bg-zinc-950/60 p-1.5">
           <div className="text-[8px] uppercase text-zinc-500">ACCELERATOR</div>
-          <div className="text-cyan-400 font-bold mt-0.5">{provider} {isNpuActive ? "" : "(Fallback)"}</div>
+          <div className="text-cyan-400 font-bold mt-0.5 truncate" title={provider}>{provider}</div>
         </div>
         <div className="rounded border border-zinc-800/80 bg-zinc-950/60 p-1.5">
-          <div className="text-[8px] uppercase text-zinc-500">STATE</div>
-          <div className={isNpuActive ? "text-lime-400 font-bold mt-0.5" : "text-amber-400 font-bold mt-0.5"}>
-            {isNpuActive ? "ACTIVE" : "FALLBACK"}
+          <div className="text-[8px] uppercase text-zinc-500">EXECUTION MODE</div>
+          <div className={isNpuActive ? "text-lime-400 font-bold mt-0.5" : (isGpu ? "text-cyan-400 font-bold mt-0.5" : "text-amber-400 font-bold mt-0.5")}>
+            {stateLabel}
           </div>
         </div>
       </div>

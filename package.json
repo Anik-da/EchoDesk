@@ -13,7 +13,10 @@
     "python:start": "python python_engine/main.py",
     "electron:start": "npx electron electron/main.cjs",
     "dev:all": "npx concurrently \"npm run dev\" \"npm run python:start\"",
-    "dist": "npm run build && npx electron-builder --win"
+    "dist": "npm run build && npx electron-builder",
+    "dist:win": "npm run build && npx electron-builder --win",
+    "dist:mac": "npm run build && npx electron-builder --mac",
+    "dist:linux": "npm run build && npx electron-builder --linux"
   },
   "build": {
     "appId": "com.echodesk.controlcenter",
@@ -25,13 +28,18 @@
       "dist/**/*",
       "electron/**/*",
       "python_engine/**/*",
+      "!python_engine/**/*.pyc",
+      "!python_engine/**/__pycache__/**/*",
+      "!python_engine/*.db",
+      "!python_engine/**/*.log",
+      "!python_engine/echodesk.db",
       "package.json"
     ],
     "win": {
       "target": [
         {
           "target": "nsis",
-          "arch": ["x64"]
+          "arch": ["x64", "arm64"]
         },
         {
           "target": "portable",
@@ -45,6 +53,32 @@
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "EchoDesk"
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": ["x64", "arm64"]
+        },
+        {
+          "target": "zip",
+          "arch": ["x64", "arm64"]
+        }
+      ],
+      "category": "public.app-category.utilities"
+    },
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": ["x64"]
+        },
+        {
+          "target": "deb",
+          "arch": ["x64"]
+        }
+      ],
+      "category": "Utility"
     }
   },
   "dependencies": {

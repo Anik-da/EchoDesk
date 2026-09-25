@@ -58,10 +58,10 @@ export function DeviceInfoModal({ isOpen, onClose }: { isOpen: boolean; onClose:
               Device Identity
             </div>
             <div className="grid grid-cols-2 gap-2">
-              <SpecItem label="Manufacturer" value={d?.manufacturer ?? "GIGABYTE"} />
-              <SpecItem label="Model" value={d?.model ?? "G6 KF"} />
-              <SpecItem label="Operating System" value={d?.os ?? "Windows 11"} />
-              <SpecItem label="System Architecture" value={d?.architecture ?? "AMD64 (x64)"} />
+              <SpecItem label="Manufacturer" value={d?.manufacturer || "Detecting..."} />
+              <SpecItem label="Model" value={d?.model || "Detecting..."} />
+              <SpecItem label="Operating System" value={d?.os_name || d?.os || "Desktop OS"} />
+              <SpecItem label="System Architecture" value={d?.architecture || "Detecting..."} />
             </div>
           </div>
 
@@ -71,7 +71,7 @@ export function DeviceInfoModal({ isOpen, onClose }: { isOpen: boolean; onClose:
               Processor & Memory
             </div>
             <div className="grid grid-cols-2 gap-2">
-              <SpecItem label="CPU Processor" value={d?.cpu?.name ?? "13th Gen Intel(R) Core(TM) i7-13620H"} colSpan={2} />
+              <SpecItem label="CPU Processor" value={d?.cpu?.name || "Detecting..."} colSpan={2} />
               <SpecItem label="Physical Cores" value={d?.cpu?.cores ? `${d.cpu.cores} Physical Cores` : "Unavailable"} />
               <SpecItem label="Logical Threads" value={d?.cpu?.threads ? `${d.cpu.threads} Threads` : "Unavailable"} />
               <SpecItem
@@ -92,7 +92,7 @@ export function DeviceInfoModal({ isOpen, onClose }: { isOpen: boolean; onClose:
             </div>
             <div className="space-y-2">
               {d?.gpu && d.gpu.length > 0 ? (
-                d.gpu.map((g, idx) => (
+                d.gpu.map((g: any, idx: number) => (
                   <div key={idx} className="rounded border border-zinc-800 bg-zinc-950/60 p-2 text-[11px] flex justify-between items-center">
                     <div>
                       <span className="font-bold text-zinc-200">{g.name}</span>
@@ -117,10 +117,10 @@ export function DeviceInfoModal({ isOpen, onClose }: { isOpen: boolean; onClose:
               )}
 
               {d?.storage && d.storage.length > 0 ? (
-                d.storage.map((disk, idx) => (
+                d.storage.map((disk: any, idx: number) => (
                   <div key={idx} className="rounded border border-zinc-800 bg-zinc-950/60 p-2 text-[11px] flex justify-between items-center">
                     <div>
-                      <span className="font-bold text-zinc-200">Drive {disk.device}</span>
+                      <span className="font-bold text-zinc-200">{disk.drive || disk.mount}</span>
                       <span className="ml-2 text-zinc-500 text-[10px]">{disk.used_gb} GB used of {disk.total_gb} GB</span>
                     </div>
                     <span className="text-lime-400 font-bold">{disk.usage_percent}% full</span>

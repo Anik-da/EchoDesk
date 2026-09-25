@@ -7,7 +7,7 @@ import { Switch } from "@/components/ui/Switch";
 import { cn } from "@/utils/cn";
 
 export function AIRuntimePage() {
-  const { aiRuntime, setAIRuntime, models, selectedModel, setSelectedModel } = useEchoDesk();
+  const { aiRuntime, setAIRuntime, models, selectedModel, setSelectedModel, deviceInfo, systemStatus } = useEchoDesk();
   const [useNPU, setUseNPU] = useState(false);
 
   const toggleAccelerator = () => {
@@ -22,6 +22,14 @@ export function AIRuntimePage() {
     });
   };
 
+  const detectedMfg = deviceInfo?.manufacturer || "Detecting";
+  const detectedModel = deviceInfo?.model || "Device";
+  const detectedCpu = deviceInfo?.cpu?.name || "Host CPU";
+  const detectedGpu = deviceInfo?.gpu?.[0]?.name || "Integrated Graphics";
+  const aiProvider = deviceInfo?.ai_runtime?.provider || aiRuntime.accelerator;
+  const isNpuAvailable = deviceInfo?.ai_runtime?.npu_available || false;
+  const execMode = isNpuAvailable ? "NPU Native" : (deviceInfo?.ai_runtime?.device_type === "GPU" ? "GPU Acceleration" : "CPU Fallback");
+
   return (
     <div className="flex h-full flex-col gap-3 overflow-y-auto p-4 select-none">
       <div>
@@ -29,32 +37,38 @@ export function AIRuntimePage() {
         <p className="text-xs text-zinc-500">On-device context classification & hardware accelerator status.</p>
       </div>
 
-      {/* GIGABYTE G6 Host Hardware Profile */}
-      <div className="rounded border border-amber-500/40 bg-amber-500/5 p-3 flex items-center justify-between">
-        <div className="space-y-1">
+      {/* Dynamic Host Hardware Profile */}
+      <div className="rounded border border-cyan-500/40 bg-cyan-500/5 p-3 flex items-center justify-between">
+        <div className="space-y-1 w-full">
           <div className="flex items-center gap-2">
-            <Server className="h-4 w-4 text-amber-400" />
-            <span className="text-xs font-mono font-bold text-amber-300 uppercase tracking-wider">
+            <Server className="h-4 w-4 text-cyan-400" />
+            <span className="text-xs font-mono font-bold text-cyan-300 uppercase tracking-wider">
               EchoDesk Runtime — Host Environment
             </span>
           </div>
           <div className="grid grid-cols-4 gap-4 text-xs font-mono pt-1">
             <div>
               <span className="text-zinc-500 text-[9px] block uppercase">HARDWARE</span>
-              <span className="text-zinc-200 font-semibold">Intel CPU / NVIDIA GPU</span>
-              <span className="text-zinc-500 text-[9px] block">(GIGABYTE G6 Host)</span>
+              <span className="text-zinc-200 font-semibold truncate block" title={`${detectedCpu} / ${detectedGpu}`}>
+                {detectedMfg} {detectedModel}
+              </span>
+              <span className="text-zinc-500 text-[9px] block truncate">{detectedCpu}</span>
             </div>
             <div>
               <span className="text-zinc-500 text-[9px] block uppercase">AI ACCELERATOR</span>
-              <span className="text-cyan-400 font-semibold">CPU / GPU (DirectML)</span>
+              <span className="text-cyan-400 font-semibold truncate block">{aiProvider}</span>
             </div>
             <div>
               <span className="text-zinc-500 text-[9px] block uppercase">SNAPDRAGON NPU</span>
-              <span className="text-zinc-400 italic">Not available</span>
+              <span className={cn("text-xs", isNpuAvailable ? "text-emerald-400 font-bold" : "text-zinc-500 italic")}>
+                {isNpuAvailable ? "Active (HTP Backend)" : "Not detected on this device"}
+              </span>
             </div>
             <div>
               <span className="text-zinc-500 text-[9px] block uppercase">EXECUTION MODE</span>
-              <span className="text-amber-400 font-semibold">Development / Fallback</span>
+              <span className={cn("font-semibold", isNpuAvailable ? "text-emerald-400" : (execMode.includes("GPU") ? "text-cyan-400" : "text-amber-400"))}>
+                {execMode}
+              </span>
             </div>
           </div>
         </div>
@@ -62,7 +76,11 @@ export function AIRuntimePage() {
 
       {/* Top telemetry cards */}
       <div className="grid grid-cols-4 gap-3">
-        <StatCard icon={Zap} label="Inference Latency" value={<AnimatedNumber value={aiRuntime.inferenceLatency} unit=" ms" />} />
+        <StatCard
+          icon={Zap}
+          label="Inference Latency"
+          value={aiRuntime.inferenceLatency !== null ? <AnimatedNumber value={aiRuntime.inferenceLatency} unit=" ms" /> : "Unavailable"}
+        />
         <StatCard icon={Cpu} label="CPU Overhead" value={<AnimatedNumber value={aiRuntime.cpuOverhead} unit="%" />} />
         <StatCard icon={MemoryStick} label="Memory Footprint" value={<AnimatedNumber value={aiRuntime.memory} unit=" MB" />} />
         <StatCard icon={Cloud} label="Cloud Requests" value="0 (ZERO CLOUD)" />
