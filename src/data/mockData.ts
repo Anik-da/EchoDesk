@@ -35,29 +35,33 @@ export const initialEvents: SemanticEvent[] = [
 ];
 
 export const initialSystemStatus: SystemStatus = {
-  cpu: 18,
-  gpu: 12,
-  ramUsed: 8.4,
+  cpu: null,
+  gpu: null,
+  ramUsed: 0,
   ramTotal: 16,
-  storageUsed: 287,
-  storageTotal: 512,
-  battery: 78,
+  ramPercent: 0,
+  storageUsed: null,
+  storageTotal: null,
+  battery: null,
   powerConnected: true,
-  cpuFanRpm: 2396,
-  gpuFanRpm: 0,
-  cpuTemp: 45,
-  gpuTemp: 43,
+  cpuFanRpm: null,
+  gpuFanRpm: null,
+  cpuTemp: null,
+  gpuTemp: null,
 };
 
 export const initialAIRuntime: AIRuntime = {
-  accelerator: "NPU",
-  status: "ACTIVE",
-  inferenceLatency: 32,
-  cpuOverhead: 14,
-  memory: 184,
+  accelerator: "CPU",
+  status: "FALLBACK",
+  inferenceLatency: null,
+  cpuOverhead: 0,
+  memory: 0,
   cloudRequests: 0,
-  modelCount: 3,
+  modelCount: 1,
   cloudEnabled: false,
+  npuAvailable: false,
+  qnnAvailable: false,
+  provider: "CPU",
 };
 
 export const initialModels: AIModel[] = [

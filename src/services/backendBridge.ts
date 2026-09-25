@@ -1,12 +1,16 @@
+import type { DeviceSystemInfo } from "@/types";
+
 export interface BackendSnapshot {
   timestamp: number;
   engineStatus: string;
   backendType: string;
+  telemetryMode?: string;
+  simulationMode?: boolean;
   contextMode: string;
   contextSubtitle: string;
   contextConfidence: number;
   contextSignals: string[];
-  inferenceLatency: number;
+  inferenceLatency: number | null;
   signals: any[];
   privacy: {
     privateMode: boolean;
@@ -19,13 +23,32 @@ export interface BackendSnapshot {
   };
   protectedApps: any[];
   timelineEvents: any[];
+  system?: DeviceSystemInfo;
   telemetry: {
-    cpu: number;
+    cpu: number | null;
+    cpuName?: string;
+    cpuCores?: number;
+    cpuThreads?: number;
+    gpu: number | null;
     ram: number;
-    gpu: number;
-    temp: number;
-    battery: number;
-    fan: string;
+    ramUsed: number;
+    ramTotal: number;
+    ramPercent?: number;
+    storageUsed: number | null;
+    storageTotal: number | null;
+    storagePercent?: number | null;
+    temp: number | null;
+    cpuTemp: number | null;
+    gpuTemp: number | null;
+    cpuFanRpm: number | null;
+    gpuFanRpm: number | null;
+    battery: number | null;
+    powerConnected: boolean;
+    powerState?: string;
+    npuAvailable?: boolean;
+    qnnAvailable?: boolean;
+    aiProvider?: string;
+    telemetryMode?: string;
   };
 }
 
@@ -125,6 +148,31 @@ export class BackendBridge {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id })
+      });
+      return res.ok;
+    } catch {
+      return false;
+    }
+  }
+
+  public static async getSystemInfo(): Promise<DeviceSystemInfo | null> {
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/system`);
+      if (res.ok) {
+        return await res.json();
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
+  public static async setTelemetryMode(mode: "LIVE" | "SIMULATION"): Promise<boolean> {
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/telemetry-mode`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode })
       });
       return res.ok;
     } catch {

@@ -40,29 +40,95 @@ export interface SemanticEvent {
 }
 
 export interface SystemStatus {
-  cpu: number;
-  gpu: number;
+  cpu: number | null;
+  cpuName?: string;
+  cpuCores?: number;
+  cpuThreads?: number;
+  gpu: number | null;
+  gpuName?: string;
   ramUsed: number;
   ramTotal: number;
-  storageUsed: number;
-  storageTotal: number;
-  battery: number;
+  ramPercent?: number;
+  storageUsed: number | null;
+  storageTotal: number | null;
+  storagePercent?: number | null;
+  battery: number | null;
   powerConnected: boolean;
-  cpuFanRpm: number;
-  gpuFanRpm: number;
-  cpuTemp: number;
-  gpuTemp: number;
+  powerState?: string;
+  cpuFanRpm: number | null;
+  gpuFanRpm: number | null;
+  cpuTemp: number | null;
+  gpuTemp: number | null;
 }
 
 export interface AIRuntime {
-  accelerator: "NPU" | "CPU";
-  status: "ACTIVE" | "IDLE" | "FALLBACK";
-  inferenceLatency: number;
+  accelerator: "NPU" | "CPU" | "CUDA" | "DirectML";
+  status: "ACTIVE" | "IDLE" | "FALLBACK" | "NOT DETECTED";
+  inferenceLatency: number | null;
   cpuOverhead: number;
   memory: number;
   cloudRequests: number;
   modelCount: number;
   cloudEnabled: boolean;
+  npuAvailable?: boolean;
+  qnnAvailable?: boolean;
+  provider?: string;
+}
+
+export interface DeviceSystemInfo {
+  mode: "LIVE" | "SIMULATION";
+  manufacturer: string;
+  model: string;
+  os: string;
+  architecture: string;
+  cpu: {
+    name: string;
+    cores: number;
+    threads: number;
+    usage_percent: number;
+  };
+  memory: {
+    total_gb: number;
+    used_gb: number;
+    available_gb: number;
+    usage_percent: number;
+  };
+  gpu: Array<{
+    name: string;
+    usage_percent: number | null;
+    temperature_c: number | null;
+    memory_used_mb: number | null;
+    memory_total_mb: number | null;
+    status: string;
+  }>;
+  storage: Array<{
+    device: string;
+    mountpoint: string;
+    total_gb: number;
+    used_gb: number;
+    free_gb: number;
+    usage_percent: number;
+  }>;
+  battery: {
+    available: boolean;
+    percent: number | null;
+    charging: boolean | null;
+    power_plugged: boolean;
+    power_state: string;
+  };
+  thermal: {
+    cpu_c: number | null;
+    gpu_c: number | null;
+    fan_rpm: number | null;
+    cpu_fan_rpm: number | null;
+    gpu_fan_rpm: number | null;
+  };
+  ai_runtime: {
+    provider: string;
+    npu_available: boolean;
+    qnn_available: boolean;
+    inference_latency_ms: number | null;
+  };
 }
 
 export interface AIModel {

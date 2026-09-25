@@ -83,6 +83,10 @@ interface EchoDeskState {
   setBackground: (b: BackgroundStatus) => void;
 
   // Settings & Simulation
+  telemetryMode: "LIVE" | "SIMULATION";
+  setTelemetryMode: (mode: "LIVE" | "SIMULATION") => void;
+  deviceInfo: DeviceSystemInfo | null;
+  setDeviceInfo: (info: DeviceSystemInfo | null) => void;
   liveSimulation: boolean;
   toggleLiveSimulation: () => void;
   devScenario: string;
@@ -104,6 +108,8 @@ const EchoDeskContext = createContext<EchoDeskState | null>(null);
 export function EchoDeskProvider({ children }: { children: ReactNode }) {
   const [activeNav, setActiveNav] = useState("system");
   const [engineConnectionStatus, setEngineConnectionStatus] = useState("SEARCHING ENGINE...");
+  const [telemetryMode, setTelemetryModeState] = useState<"LIVE" | "SIMULATION">("LIVE");
+  const [deviceInfo, setDeviceInfo] = useState<DeviceSystemInfo | null>(null);
   const [contextMode, setContextModeState] = useState<ContextMode>("DEEP FOCUS");
   const [samplingMode, setSamplingMode] = useState<SamplingMode>("BALANCED");
   const [signals, setSignals] = useState<SensorSignal[]>(initialSignals);
@@ -115,7 +121,7 @@ export function EchoDeskProvider({ children }: { children: ReactNode }) {
   const [privacy, setPrivacy] = useState<PrivacyState>(initialPrivacy);
   const [protectedApps, setProtectedApps] = useState<ProtectedApp[]>(initialProtectedApps);
   const [background, setBackground] = useState<BackgroundStatus>(initialBackground);
-  const [liveSimulation, setLiveSimulation] = useState(true);
+  const [liveSimulation, setLiveSimulation] = useState(false); // Default to LIVE HARDWARE
   const [devScenario, setDevScenarioState] = useState("Deep Coding Session");
   const [settings, setSettings] = useState<Record<string, boolean>>({
     launchAtStartup: true,
@@ -223,7 +229,25 @@ export function EchoDeskProvider({ children }: { children: ReactNode }) {
     setProtectedApps((prev) => prev.filter((a) => a.id !== id));
   }, []);
 
-  const toggleLiveSimulation = useCallback(() => setLiveSimulation((v) => !v), []);
+  const setTelemetryMode = useCallback((mode: "LIVE" | "SIMULATION") => {
+    setTelemetryModeState(mode);
+    setLiveSimulation(mode === "SIMULATION");
+    import("@/services/backendBridge").then(({ BackendBridge }) => {
+      BackendBridge.setTelemetryMode(mode);
+    });
+  }, []);
+
+  const toggleLiveSimulation = useCallback(() => {
+    setLiveSimulation((prev) => {
+      const next = !prev;
+      const nextMode = next ? "SIMULATION" : "LIVE";
+      setTelemetryModeState(nextMode);
+      import("@/services/backendBridge").then(({ BackendBridge }) => {
+        BackendBridge.setTelemetryMode(nextMode);
+      });
+      return next;
+    });
+  }, []);
 
   const toggleSetting = useCallback((key: string) => {
     setSettings((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -234,6 +258,10 @@ export function EchoDeskProvider({ children }: { children: ReactNode }) {
     setActiveNav,
     engineConnectionStatus,
     setEngineConnectionStatus,
+    telemetryMode,
+    setTelemetryMode,
+    deviceInfo,
+    setDeviceInfo,
     contextMode,
     setContextMode,
     currentContext: modeData.context as ContextState,

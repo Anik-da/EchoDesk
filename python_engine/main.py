@@ -32,6 +32,13 @@ class EchoDeskHandler(http.server.BaseHTTPRequestHandler):
             self.end_headers()
             snapshot = engine.get_telemetry_snapshot()
             self.wfile.write(json.dumps(snapshot).encode("utf-8"))
+        elif self.path == "/api/system":
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self._send_cors_headers()
+            self.end_headers()
+            snapshot = engine.get_telemetry_snapshot()
+            self.wfile.write(json.dumps(snapshot.get("system", {})).encode("utf-8"))
         elif self.path == "/api/stream":
             self.send_response(200)
             self.send_header("Content-Type", "text/event-stream")
@@ -77,6 +84,15 @@ class EchoDeskHandler(http.server.BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(json.dumps({"success": True}).encode("utf-8"))
 
+        elif self.path == "/api/telemetry-mode":
+            mode = payload.get("mode", "LIVE")
+            engine.set_telemetry_mode(mode)
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self._send_cors_headers()
+            self.end_headers()
+            self.wfile.write(json.dumps({"success": True, "telemetryMode": engine.telemetry_mode}).encode("utf-8"))
+
         elif self.path == "/api/simulation-mode":
             enabled = payload.get("enabled", True)
             engine.set_simulation_mode(enabled)
@@ -84,7 +100,7 @@ class EchoDeskHandler(http.server.BaseHTTPRequestHandler):
             self.send_header("Content-Type", "application/json")
             self._send_cors_headers()
             self.end_headers()
-            self.wfile.write(json.dumps({"success": True, "simulationMode": enabled}).encode("utf-8"))
+            self.wfile.write(json.dumps({"success": True, "simulationMode": enabled, "telemetryMode": engine.telemetry_mode}).encode("utf-8"))
 
         elif self.path == "/api/scenario":
             scenario = payload.get("scenario", "Deep Coding Session")
@@ -124,6 +140,27 @@ class EchoDeskHandler(http.server.BaseHTTPRequestHandler):
         pass
 
 def run():
+    from system.device_info import device_service
+    info = device_service.get_static_info()
+    dyn = device_service.get_dynamic_telemetry()
+    gpu_desc = ", ".join([g["name"] for g in info["gpus"]])
+    npu_state = "Active" if info["npu_info"]["npu_available"] else "Not detected"
+    qnn_state = "Available" if info["npu_info"]["qnn_available"] else "Not available"
+
+    print("==================================================")
+    print("EchoDesk hardware detection")
+    print(f"Manufacturer: {info['manufacturer']}")
+    print(f"Model: {info['model']}")
+    print(f"CPU: {info['cpu_name']}")
+    print(f"GPU: {gpu_desc}")
+    print(f"RAM: {dyn['memory']['total_gb']} GB")
+    print(f"OS: {info['os']}")
+    print(f"Architecture: {info['architecture']}")
+    print(f"NPU: {npu_state}")
+    print(f"QNN: {qnn_state}")
+    print(f"Runtime: {info['npu_info']['provider']}")
+    print("Default Mode: LIVE HARDWARE")
+    print("==================================================")
     print(f"[EchoDesk Engine] Python Background Service listening on http://127.0.0.1:{PORT}")
     server = socketserver.TCPServer(("127.0.0.1", PORT), EchoDeskHandler)
     try:

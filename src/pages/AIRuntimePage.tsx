@@ -133,9 +133,9 @@ export function AIRuntimePage() {
         {/* Real-time Benchmark Graphs */}
         <Panel title="Performance Metrics" accent>
           <div className="space-y-3">
-            <Graph title="Inference Latency" unit="ms" color="#10b981" baseValue={aiRuntime.inferenceLatency} range={[15, 60]} />
-            <Graph title="Memory Usage" unit="MB" color="#06b6d4" baseValue={aiRuntime.memory} range={[160, 210]} />
-            <Graph title="CPU Activity" unit="%" color="#f59e0b" baseValue={aiRuntime.cpuOverhead} range={[8, 40]} />
+            <Graph title="Inference Latency" unit=" ms" color="#10b981" currentValue={aiRuntime.inferenceLatency} range={[0, 50]} />
+            <Graph title="CPU Load" unit="%" color="#06b6d4" currentValue={systemStatus.cpu} range={[0, 100]} />
+            <Graph title="RAM Consumption" unit=" GB" color="#f59e0b" currentValue={systemStatus.ramUsed} range={[0, systemStatus.ramTotal || 16]} />
           </div>
         </Panel>
       </div>
@@ -164,22 +164,46 @@ function ModelDetail({ label, value }: { label: string; value: string }) {
   );
 }
 
-function Graph({ title, unit, color, baseValue, range }: { title: string; unit: string; color: string; baseValue: number; range: [number, number] }) {
-  const [data, setData] = useState<number[]>(() => Array.from({ length: 40 }, () => baseValue));
+function Graph({
+  title,
+  unit,
+  color,
+  currentValue,
+  range,
+}: {
+  title: string;
+  unit: string;
+  color: string;
+  currentValue: number | null;
+  range: [number, number];
+}) {
+  const [data, setData] = useState<number[]>(() => Array.from({ length: 30 }, () => currentValue ?? range[0]));
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      const val = Math.max(range[0], Math.min(range[1], baseValue + (Math.random() - 0.5) * (range[1] - range[0]) * 0.15));
-      setData((prev) => [...prev.slice(1), val]);
-    }, 1500);
-    return () => clearInterval(interval);
-  }, [baseValue, range]);
+    if (currentValue !== null && typeof currentValue === "number") {
+      setData((prev) => [...prev.slice(1), currentValue]);
+    }
+  }, [currentValue]);
+
+  if (currentValue === null) {
+    return (
+      <div>
+        <div className="flex items-center justify-between mb-1">
+          <span className="text-[10px] font-mono uppercase text-zinc-500">{title}</span>
+          <span className="font-mono text-[10px] text-zinc-500">Unavailable</span>
+        </div>
+        <div className="relative h-10 rounded border border-zinc-800 bg-zinc-950/60 flex items-center justify-center text-[10px] font-mono text-zinc-600">
+          Telemetry unavailable from hardware
+        </div>
+      </div>
+    );
+  }
 
   const min = range[0];
   const max = range[1];
   const points = data.map((v, i) => {
     const x = (i / (data.length - 1)) * 100;
-    const y = 100 - ((v - min) / (max - min)) * 100;
+    const y = 100 - Math.max(0, Math.min(100, ((v - min) / (max - min || 1)) * 100));
     return `${x},${y}`;
   }).join(" ");
 
@@ -188,7 +212,7 @@ function Graph({ title, unit, color, baseValue, range }: { title: string; unit: 
       <div className="flex items-center justify-between mb-1">
         <span className="text-[10px] font-mono uppercase text-zinc-500">{title}</span>
         <span className="font-mono text-[10px] tabular-nums text-zinc-300">
-          {Math.round(data[data.length - 1])}{unit}
+          {Math.round(currentValue * 10) / 10}{unit}
         </span>
       </div>
       <div className="relative h-12 rounded border border-zinc-800 bg-zinc-950/60 overflow-hidden">

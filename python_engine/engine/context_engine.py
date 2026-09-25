@@ -18,10 +18,12 @@ from engine.privacy_engine import PrivacyEngine
 from engine.ai_model_abstraction import ContextModel, get_hardware_capabilities
 from engine.benchmark import RuntimeBenchmarker
 from storage.db import init_db, get_protected_apps, get_timeline_events, log_timeline_event
+from system.device_info import device_service
 
 class ContextEngine:
     def __init__(self):
         init_db()
+        self.telemetry_mode = "LIVE"  # Default: LIVE HARDWARE
         self.simulation_mode = False
         self.scenario = "Deep Coding Session"
 
@@ -54,8 +56,14 @@ class ContextEngine:
         apps = get_protected_apps()
         self.privacy_engine.set_protected_apps(apps)
 
+    def set_telemetry_mode(self, mode: str):
+        if mode in ("LIVE", "SIMULATION"):
+            self.telemetry_mode = mode
+            self.simulation_mode = (mode == "SIMULATION")
+
     def set_simulation_mode(self, enabled: bool):
         self.simulation_mode = enabled
+        self.telemetry_mode = "SIMULATION" if enabled else "LIVE"
 
     def set_scenario(self, scenario: str):
         self.scenario = scenario
@@ -180,16 +188,84 @@ class ContextEngine:
         # Benchmark model execution
         bench = self.benchmarker.benchmark_model(self.model)
         hw_caps = get_hardware_capabilities()
-
         t = time.time()
-        cpu_val = round(16.0 + 5.0 * math.sin(t * 0.4), 1)
-        ram_val = round(42.5 + 1.5 * math.cos(t * 0.2), 1)
-        gpu_val = round(12.0 + 3.0 * math.sin(t * 0.5), 1)
+
+        # Query real hardware telemetry
+        sys_data = device_service.get_dynamic_telemetry(inference_latency_ms=bench["inferenceLatencyMs"])
+        sys_data["mode"] = self.telemetry_mode
+
+        if self.telemetry_mode == "LIVE":
+            # Real hardware telemetry mapping
+            primary_gpu_usage = None
+            primary_gpu_temp = sys_data["thermal"]["gpu_c"]
+            for g in sys_data["gpu"]:
+                if g.get("usage_percent") is not None:
+                    primary_gpu_usage = g["usage_percent"]
+                    break
+
+            telemetry_payload = {
+                "cpu": sys_data["cpu"]["usage_percent"],
+                "cpuName": sys_data["cpu"]["name"],
+                "cpuCores": sys_data["cpu"]["cores"],
+                "cpuThreads": sys_data["cpu"]["threads"],
+                "gpu": primary_gpu_usage,
+                "ram": sys_data["memory"]["used_gb"],
+                "ramUsed": sys_data["memory"]["used_gb"],
+                "ramTotal": sys_data["memory"]["total_gb"],
+                "ramPercent": sys_data["memory"]["usage_percent"],
+                "storageUsed": sys_data["storage"][0]["used_gb"] if sys_data["storage"] else None,
+                "storageTotal": sys_data["storage"][0]["total_gb"] if sys_data["storage"] else None,
+                "storagePercent": sys_data["storage"][0]["usage_percent"] if sys_data["storage"] else None,
+                "temp": primary_gpu_temp,
+                "cpuTemp": sys_data["thermal"]["cpu_c"],  # None -> UI renders "Unavailable"
+                "gpuTemp": primary_gpu_temp,             # Real GPU temp if NVIDIA, else None
+                "cpuFanRpm": sys_data["thermal"]["cpu_fan_rpm"],  # None -> UI renders "Unavailable"
+                "gpuFanRpm": sys_data["thermal"]["gpu_fan_rpm"],  # None -> UI renders "Unavailable"
+                "battery": sys_data["battery"]["percent"],
+                "powerConnected": sys_data["battery"]["charging"],
+                "powerState": sys_data["battery"]["power_state"],
+                "npuAvailable": sys_data["ai_runtime"]["npu_available"],
+                "qnnAvailable": sys_data["ai_runtime"]["qnn_available"],
+                "aiProvider": sys_data["ai_runtime"]["provider"],
+                "telemetryMode": "LIVE HARDWARE"
+            }
+        else:
+            # Explicit DEVELOPMENT SIMULATION mode
+            cpu_val = round(16.0 + 5.0 * math.sin(t * 0.4), 1)
+            ram_val = round(8.4 + 0.3 * math.cos(t * 0.2), 1)
+            gpu_val = round(12.0 + 3.0 * math.sin(t * 0.5), 1)
+            telemetry_payload = {
+                "cpu": cpu_val,
+                "cpuName": "Simulated Processor (Dev Mode)",
+                "cpuCores": 8,
+                "cpuThreads": 16,
+                "gpu": gpu_val,
+                "ram": ram_val,
+                "ramUsed": ram_val,
+                "ramTotal": 16.0,
+                "ramPercent": round((ram_val / 16.0) * 100, 1),
+                "storageUsed": 287,
+                "storageTotal": 512,
+                "storagePercent": 56.0,
+                "temp": 45,
+                "cpuTemp": 45,
+                "gpuTemp": 43,
+                "cpuFanRpm": 2396,
+                "gpuFanRpm": 2100,
+                "battery": 85,
+                "powerConnected": True,
+                "powerState": "Simulated AC Power",
+                "npuAvailable": False,
+                "qnnAvailable": False,
+                "aiProvider": "CPU (Simulated)",
+                "telemetryMode": "DEVELOPMENT SIMULATION"
+            }
 
         return {
             "timestamp": t,
             "engineStatus": "ONLINE",
             "backendType": "PYTHON_NATIVE",
+            "telemetryMode": "LIVE HARDWARE" if self.telemetry_mode == "LIVE" else "DEVELOPMENT SIMULATION",
             "simulationMode": self.simulation_mode,
             "devScenario": self.scenario,
             "contextMode": context_state,
@@ -212,12 +288,6 @@ class ContextEngine:
             "timelineEvents": get_timeline_events(),
             "hardwareCapabilities": hw_caps,
             "benchmark": bench,
-            "telemetry": {
-                "cpu": cpu_val,
-                "ram": ram_val,
-                "gpu": gpu_val,
-                "temp": 45,
-                "battery": 90,
-                "fan": "QUIET"
-            }
+            "system": sys_data,
+            "telemetry": telemetry_payload
         }
