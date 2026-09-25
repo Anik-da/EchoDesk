@@ -1,0 +1,121 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --ed-bg: #0a0a0b;
+  --ed-panel: #131316;
+  --ed-border: #27272a;
+  --ed-accent: #34d399;
+}
+
+* {
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  background: var(--ed-bg);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  overflow: hidden;
+  user-select: none;
+}
+
+.mono {
+  font-family: 'JetBrains Mono', 'SF Mono', 'Cascadia Code', monospace;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #3f3f46;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #52525b;
+}
+
+/* Slider styles */
+.ed-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 3px;
+  border-radius: 2px;
+  background: linear-gradient(to right, #34d399 var(--pct, 0%), #3f3f46 var(--pct, 0%));
+  cursor: pointer;
+  outline: none;
+}
+.ed-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #34d399;
+  cursor: pointer;
+  border: 2px solid #0a0a0b;
+  box-shadow: 0 0 4px rgba(52, 211, 153, 0.5);
+  transition: transform 0.15s;
+}
+.ed-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+.ed-slider::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #34d399;
+  cursor: pointer;
+  border: 2px solid #0a0a0b;
+  box-shadow: 0 0 4px rgba(52, 211, 153, 0.5);
+}
+
+/* Smooth transitions */
+.ed-fade-enter {
+  animation: edFadeIn 0.3s ease-out;
+}
+@keyframes edFadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Pulse */
+@keyframes edPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+.ed-pulse {
+  animation: edPulse 2s ease-in-out infinite;
+}
+
+/* Slow rotation for context core */
+@keyframes edSlowRotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.ed-slow-rotate {
+  animation: edSlowRotate 60s linear infinite;
+}
+.ed-slow-rotate-rev {
+  animation: edSlowRotate 40s linear infinite reverse;
+}
+
+/* Gauge arc transition */
+.ed-arc {
+  transition: stroke-dashoffset 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Mode strip button */
+.ed-mode-btn {
+  transition: all 0.2s ease;
+}
+
+/* Status dot */
+.ed-dot {
+  transition: all 0.3s ease;
+}
