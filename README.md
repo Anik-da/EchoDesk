@@ -41,7 +41,10 @@
 
 1. Download **[EchoDesk for Windows](https://github.com/Anik-da/EchoDesk/releases/download/v1.0.0/EchoDesk-Setup-Windows-x64.exe)**.
 2. Run `EchoDesk-Setup.exe` (or `EchoDesk-Setup-Windows-x64.exe`).
-3. Follow the installer prompts to choose destination and shortcuts.
+   > 💡 **Windows Defender SmartScreen Notice**: Because EchoDesk is an independent open-source binary, Windows SmartScreen will display *"Windows protected your PC"*. To proceed with the installation:
+   > 1. Click **"More info"** (underlined link on the dialog).
+   > 2. Click the **"Run anyway"** button that appears.
+3. Follow the installer prompts to choose destination and desktop shortcut.
 4. Launch **EchoDesk**.
 5. Allow requested permissions when prompted.
 6. EchoDesk detects the current device automatically and provisions a fresh local database.

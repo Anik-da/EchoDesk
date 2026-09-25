@@ -60,13 +60,10 @@
         {
           "target": "dmg",
           "arch": ["x64", "arm64"]
-        },
-        {
-          "target": "zip",
-          "arch": ["x64", "arm64"]
         }
       ],
-      "category": "public.app-category.utilities"
+      "category": "public.app-category.utilities",
+      "artifactName": "EchoDesk-macOS-${arch}.${ext}"
     },
     "linux": {
       "target": [
@@ -79,7 +76,8 @@
           "arch": ["x64"]
         }
       ],
-      "category": "Utility"
+      "category": "Utility",
+      "artifactName": "EchoDesk-Linux-${arch}.${ext}"
     }
   },
   "dependencies": {
