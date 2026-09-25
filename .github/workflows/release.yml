@@ -43,7 +43,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libarchive-tools desktop-file-utils
+          sudo apt-get install -y libarchive-tools desktop-file-utils fakeroot libfuse2 fuse
 
       - name: Install NPM Dependencies
         run: npm ci
@@ -63,8 +63,8 @@ jobs:
 
       - name: Upload Release Assets
         uses: softprops/action-gh-release@v2
-        if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
         with:
+          tag_name: "v1.0.0"
           files: |
             dist_electron/*.dmg
             dist_electron/*.AppImage
