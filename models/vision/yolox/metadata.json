@@ -1,0 +1,59 @@
+{
+    "model_id": "yolox",
+    "model_name": "Yolo-X",
+    "runtime": "onnx",
+    "precision": "float",
+    "tool_versions": {
+        "qairt": "2.50.0.260828221209",
+        "onnx_runtime": "1.27.1"
+    },
+    "model_files": {
+        "yolox.onnx": {
+            "inputs": {
+                "image": {
+                    "shape": [
+                        1,
+                        3,
+                        640,
+                        640
+                    ],
+                    "dtype": "float32",
+                    "io_type": "image",
+                    "image_metadata": {},
+                    "value_range": [
+                        0.0,
+                        1.0
+                    ]
+                }
+            },
+            "outputs": {
+                "boxes": {
+                    "shape": [
+                        1,
+                        8400,
+                        4
+                    ],
+                    "dtype": "float32"
+                },
+                "scores": {
+                    "shape": [
+                        1,
+                        8400
+                    ],
+                    "dtype": "float32"
+                },
+                "class_idx": {
+                    "shape": [
+                        1,
+                        8400
+                    ],
+                    "dtype": "uint8"
+                }
+            }
+        }
+    },
+    "supplementary_files": {
+        "labels.txt": "Mapping of model prediction indices -> string labels."
+    },
+    "use_case": "Object Detection"
+}

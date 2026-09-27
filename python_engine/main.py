@@ -178,6 +178,7 @@ def run():
     print(f"NPU: {npu_state}")
     print(f"QNN: {qnn_state}")
     print(f"Runtime: {info['npu_info']['provider']}")
+    print("Models: YOLOX-Small (Vision, Apache-2.0), YAMNet (Audio, MIT)")
     print("Default Mode: LIVE HARDWARE")
     print("==================================================")
     print(f"[EchoDesk Engine] Python Background Service listening on http://127.0.0.1:{PORT}")

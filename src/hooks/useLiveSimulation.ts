@@ -13,6 +13,7 @@ export function useLiveSimulation() {
     setEvents,
     setSystemStatus,
     setAIRuntime,
+    setModels,
     setDeviceInfo,
     setPrivacy,
     setProtectedApps,
@@ -154,7 +155,10 @@ export function useLiveSimulation() {
           });
         }
 
-        // Sync Protected Apps & Timeline Events
+        // Sync Protected Apps & Timeline Events & Real Models
+        if (snapshot.models && Array.isArray(snapshot.models) && snapshot.models.length > 0) {
+          setModels(snapshot.models);
+        }
         if (snapshot.protectedApps && snapshot.protectedApps.length > 0) {
           setProtectedApps(snapshot.protectedApps);
         }

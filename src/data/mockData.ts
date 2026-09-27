@@ -65,9 +65,8 @@ export const initialAIRuntime: AIRuntime = {
 };
 
 export const initialModels: AIModel[] = [
-  { id: "vision", name: "Vision Model", status: "loaded", runtime: "NPU", latency: 18, memory: 96, state: "Processing frames at 5 Hz" },
-  { id: "audio", name: "Audio Model", status: "loaded", runtime: "NPU", latency: 8, memory: 42, state: "Analyzing audio buffers" },
-  { id: "context", name: "Context Model", status: "loaded", runtime: "NPU", latency: 6, memory: 46, state: "Deriving semantic context" },
+  { id: "yolox", name: "YOLOX-Small (Vision)", status: "loaded", runtime: "CPU", latency: 18, memory: 24.5, state: "On-device presence detection (YOLOX-Small)" },
+  { id: "yamnet", name: "YAMNet (Audio)", status: "loaded", runtime: "CPU", latency: 8, memory: 12.0, state: "On-device audio classification (YAMNet)" },
 ];
 
 export const initialTimeline: TimelineEvent[] = [

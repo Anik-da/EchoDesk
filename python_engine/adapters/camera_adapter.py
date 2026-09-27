@@ -1,6 +1,7 @@
 import time
 import gc
 from adapters.base_adapter import BaseSensorAdapter
+from engine.ai_model_abstraction import VisionModel
 
 try:
     import cv2
@@ -9,27 +10,21 @@ except ImportError:
     OPENCV_AVAILABLE = False
 
 class CameraAdapter(BaseSensorAdapter):
+    """Camera sensor adapter powered by YOLOX-Small local ONNX object detection."""
+
     def __init__(self):
-        super().__init__(sensor_id="camera", sensor_type="camera", label="Camera Sensor")
-        self.cap = None
-        self.face_cascade = None
+        super().__init__(sensor_id="camera", sensor_type="camera", label="Vision (YOLOX-Small)")
         self.last_check_time = 0
-        self.check_interval = 1.0  # Controlled 1 Hz sampling rate
+        self.check_interval = 1.0  # Rate-limited to 1 Hz sampling
         self.cached_result = None
 
-        if OPENCV_AVAILABLE:
-            try:
-                # Load OpenCV Haar cascade for face detection
-                cascade_path = cv2.data.haarcascades + 'haarcascade_frontalface_default.xml'
-                self.face_cascade = cv2.CascadeClassifier(cascade_path)
-            except Exception as e:
-                self.error_message = f"Haar cascade load error: {e}"
+        self.vision_model = VisionModel()
+        self.vision_loaded = self.vision_model.load()
 
     def is_available(self) -> bool:
         if not OPENCV_AVAILABLE:
             return False
         try:
-            # Quick probe
             cap = cv2.VideoCapture(0, cv2.CAP_DSHOW) if hasattr(cv2, 'CAP_DSHOW') else cv2.VideoCapture(0)
             if cap and cap.isOpened():
                 cap.release()
@@ -48,11 +43,14 @@ class CameraAdapter(BaseSensorAdapter):
                 "state": "off",
                 "activityLevel": 0,
                 "semantic_outputs": ["USER_AWAY"],
-                "description": "Camera sensor disabled by user"
+                "description": "Camera sensor disabled by user",
+                "confidence": 0.0,
+                "latency_ms": 0.0,
+                "provider": self.vision_model.provider(),
+                "model": "YOLOX-Small"
             }
 
         now = time.time()
-        # Rate limiting: sample max once per check_interval
         if self.cached_result and (now - self.last_check_time < self.check_interval):
             return self.cached_result
 
@@ -67,12 +65,15 @@ class CameraAdapter(BaseSensorAdapter):
                 "state": "unavailable",
                 "activityLevel": 0,
                 "semantic_outputs": ["NO_PERSON"],
-                "description": "OpenCV library unavailable on host"
+                "description": "OpenCV library unavailable on host",
+                "confidence": 0.0,
+                "latency_ms": 0.0,
+                "provider": self.vision_model.provider(),
+                "model": "YOLOX-Small"
             }
             return self.cached_result
 
         try:
-            # Capture single frame
             cap = cv2.VideoCapture(0, cv2.CAP_DSHOW) if hasattr(cv2, 'CAP_DSHOW') else cv2.VideoCapture(0)
             if not cap or not cap.isOpened():
                 if cap:
@@ -85,12 +86,16 @@ class CameraAdapter(BaseSensorAdapter):
                     "state": "unavailable",
                     "activityLevel": 0,
                     "semantic_outputs": ["NO_PERSON"],
-                    "description": "Camera hardware device unavailable or in use"
+                    "description": "Camera device unavailable or in use by another app",
+                    "confidence": 0.0,
+                    "latency_ms": 0.0,
+                    "provider": self.vision_model.provider(),
+                    "model": "YOLOX-Small"
                 }
                 return self.cached_result
 
             ret, frame = cap.read()
-            cap.release()  # Immediately release camera device
+            cap.release()
 
             if not ret or frame is None:
                 self.cached_result = {
@@ -101,49 +106,35 @@ class CameraAdapter(BaseSensorAdapter):
                     "state": "low",
                     "activityLevel": 0,
                     "semantic_outputs": ["USER_AWAY"],
-                    "description": "Blank camera frame captured"
+                    "description": "Blank camera frame captured",
+                    "confidence": 0.0,
+                    "latency_ms": 0.0,
+                    "provider": self.vision_model.provider(),
+                    "model": "YOLOX-Small"
                 }
                 return self.cached_result
 
-            # Process frame for presence detection
-            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            
-            # Detect faces if cascade loaded
-            faces = []
-            if self.face_cascade and not self.face_cascade.empty():
-                faces = self.face_cascade.detectMultiScale(gray, scaleFactor=1.2, minNeighbors=4, minSize=(30, 30))
+            # Run real YOLOX-Small local inference
+            v_res = self.vision_model.infer({"frame": frame})
 
-            num_faces = len(faces)
-
-            # Determine semantic outputs
-            if num_faces == 1:
-                semantics = ["PERSON_PRESENT"]
-                activity_level = 85
-                desc = "User present (1 face detected on-device)"
-                state = "active"
-            elif num_faces > 1:
-                semantics = ["PERSON_PRESENT", "MULTIPLE_PEOPLE"]
-                activity_level = 95
-                desc = f"Multiple people present ({num_faces} faces detected)"
-                state = "active"
-            else:
-                # Fallback to mean luminance / motion check if no face cascade match
-                mean_lum = gray.mean()
-                if mean_lum > 15:  # Non-black frame indicates user likely present at desk
-                    semantics = ["PERSON_PRESENT"]
-                    activity_level = 60
-                    desc = "User present (desk presence detected)"
-                    state = "active"
-                else:
-                    semantics = ["USER_AWAY", "NO_PERSON"]
-                    activity_level = 0
-                    desc = "No user detected"
-                    state = "low"
-
-            # CRITICAL PRIVACY: Immediately release raw frame memory buffers
+            # CRITICAL PRIVACY: Immediately release raw frame memory
             del frame
-            del gray
             gc.collect()
+
+            person_count = v_res.get("person_count", 0)
+            user_present = v_res.get("user_present", False)
+            conf = v_res.get("confidence", 0.0)
+            lat = v_res.get("latency_ms", 0.0)
+            prov = v_res.get("provider", self.vision_model.provider())
+
+            if user_present:
+                state = "active"
+                act_lvl = max(60, int(conf * 100))
+                desc = f"YOLOX-Small: {person_count} person detected ({conf*100:.0f}% conf, {lat}ms)"
+            else:
+                state = "low"
+                act_lvl = 0
+                desc = f"YOLOX-Small: No person detected ({lat}ms)"
 
             self.cached_result = {
                 "id": self.sensor_id,
@@ -151,9 +142,13 @@ class CameraAdapter(BaseSensorAdapter):
                 "enabled": True,
                 "available": True,
                 "state": state,
-                "activityLevel": activity_level,
-                "semantic_outputs": semantics,
+                "activityLevel": act_lvl,
+                "semantic_outputs": v_res.get("semantic_outputs", ["NO_PERSON"]),
                 "description": desc,
+                "confidence": conf,
+                "latency_ms": lat,
+                "provider": prov,
+                "model": "YOLOX-Small",
                 "raw_released": True
             }
             return self.cached_result
@@ -167,6 +162,10 @@ class CameraAdapter(BaseSensorAdapter):
                 "state": "unavailable",
                 "activityLevel": 0,
                 "semantic_outputs": ["NO_PERSON"],
-                "description": f"Camera sensor error: {str(e)[:40]}"
+                "description": f"Camera sensor error: {str(e)[:40]}",
+                "confidence": 0.0,
+                "latency_ms": 0.0,
+                "provider": self.vision_model.provider(),
+                "model": "YOLOX-Small"
             }
             return self.cached_result

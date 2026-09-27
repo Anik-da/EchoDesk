@@ -66,6 +66,7 @@ interface EchoDeskState {
   aiRuntime: AIRuntime;
   setAIRuntime: React.Dispatch<React.SetStateAction<AIRuntime>>;
   models: AIModel[];
+  setModels: React.Dispatch<React.SetStateAction<AIModel[]>>;
 
   // Timeline
   timeline: TimelineEvent[];
@@ -119,7 +120,7 @@ export function EchoDeskProvider({ children }: { children: ReactNode }) {
   const [events, setEvents] = useState<SemanticEvent[]>(initialEvents);
   const [systemStatus, setSystemStatus] = useState<SystemStatus>(initialSystemStatus);
   const [aiRuntime, setAIRuntime] = useState<AIRuntime>(initialAIRuntime);
-  const [models] = useState<AIModel[]>(initialModels);
+  const [models, setModels] = useState<AIModel[]>(initialModels);
   const [timeline, setTimeline] = useState<TimelineEvent[]>(initialTimeline);
   const [privacy, setPrivacy] = useState<PrivacyState>(initialPrivacy);
   const [protectedApps, setProtectedApps] = useState<ProtectedApp[]>(initialProtectedApps);
@@ -308,6 +309,7 @@ export function EchoDeskProvider({ children }: { children: ReactNode }) {
     aiRuntime,
     setAIRuntime,
     models,
+    setModels,
     timeline,
     setTimelineEvents: setTimeline,
     privacy,

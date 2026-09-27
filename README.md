@@ -3,21 +3,30 @@
 **Privacy-First On-Device Context Engine**
 
 [![Latest Release](https://img.shields.io/github/v/release/Anik-da/EchoDesk?style=for-the-badge&color=blue)](https://github.com/Anik-da/EchoDesk/releases/latest)
-[![Windows](https://img.shields.io/badge/Platform-Windows_x64-0078D6?style=for-the-badge&logo=windows)](https://github.com/Anik-da/EchoDesk/releases/download/v1.0.0/EchoDesk-Setup-Windows-x64.exe)
+[![Windows](https://img.shields.io/badge/Platform-Windows_x64-0078D6?style=for-the-badge&logo=windows)](https://github.com/Anik-da/EchoDesk/releases/latest)
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
 ---
 
 ## 🚀 Download EchoDesk
 
-### 👉 [Download Latest EchoDesk Release](https://github.com/Anik-da/EchoDesk/releases/latest)
+### 👉 [Download Latest EchoDesk Release (v1.1.0)](https://github.com/Anik-da/EchoDesk/releases/latest)
 
 ---
 
 ### Windows (x64)
-- 🪟 **[Download EchoDesk for Windows](https://github.com/Anik-da/EchoDesk/releases/download/v1.0.0/EchoDesk-Setup-Windows-x64.exe)** (`EchoDesk-Setup-Windows-x64.exe`)
-- Direct installer link: **[EchoDesk-Setup-Windows-x64.exe](https://github.com/Anik-da/EchoDesk/releases/download/v1.0.0/EchoDesk-Setup-Windows-x64.exe)** *(75.5 MB, NSIS Installer)*
-- Portable ZIP archive: **[EchoDesk-Windows-v1.0.0.zip](https://github.com/Anik-da/EchoDesk/releases/download/v1.0.0/EchoDesk-Windows-v1.0.0.zip)** *(448 MB)*
+- 🪟 **[Download EchoDesk for Windows (Latest)](https://github.com/Anik-da/EchoDesk/releases/latest)** (`EchoDesk-Setup-Windows-x64.exe`)
+- Direct installer link: **[EchoDesk-Setup-Windows-x64.exe](https://github.com/Anik-da/EchoDesk/releases/latest)** *(NSIS Installer with Real Local AI Models)*
+- Portable ZIP archive: **[EchoDesk-Windows-Latest.zip](https://github.com/Anik-da/EchoDesk/releases/latest)**
+
+---
+
+## 🧠 Real Local AI Models (Qualcomm AI Hub)
+EchoDesk executes 100% on-device local AI inference using Qualcomm AI Hub optimized models:
+- **YOLOX-Small (Vision)**: Real-time on-device presence object detection (`Apache-2.0` license).
+- **YAMNet (Audio)**: Real-time environmental audio event classification (`MIT` license).
+- **Hardware Acceleration**: Automatic runtime routing to **Qualcomm Hexagon NPU** (`QNN`), **NVIDIA CUDA**, **DirectML**, or **CPU Fallback**.
+- **Model Setup Script**: `python scripts/download_models.py` downloads and verifies models automatically.
 
 ### macOS (Apple Silicon & Intel)
 - 🍏 **[Download EchoDesk for macOS](https://github.com/Anik-da/EchoDesk/releases/latest)** *(Apple Silicon M-series & Intel Mac support; build from source via `npm run dist:mac`)*
