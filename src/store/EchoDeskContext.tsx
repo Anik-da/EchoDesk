@@ -44,6 +44,14 @@ interface EchoDeskState {
   contextConfidence: number;
   contextSignals: string[];
   setLiveContextInfo: (subtitle: string, confidence: number, signals: string[]) => void;
+  autoModeEnabled: boolean;
+  setAutoMode: (enabled: boolean) => void;
+  modeReasons: string[];
+  setModeReasons: (reasons: string[]) => void;
+  systemChanges: string[];
+  setSystemChanges: (changes: string[]) => void;
+  activeAppInfo: { application: string; process: string; windowTitle: string };
+  setActiveAppInfo: (info: { application: string; process: string; windowTitle: string }) => void;
 
   // Sampling
   samplingMode: SamplingMode;
@@ -150,6 +158,22 @@ export function EchoDeskProvider({ children }: { children: ReactNode }) {
   const [liveSubtitle, setLiveSubtitle] = useState<string | null>(null);
   const [liveConfidence, setLiveConfidence] = useState<number | null>(null);
   const [liveSignals, setLiveSignals] = useState<string[] | null>(null);
+
+  const [autoModeEnabled, setAutoModeEnabledState] = useState(true);
+  const [modeReasons, setModeReasons] = useState<string[]>([]);
+  const [systemChanges, setSystemChanges] = useState<string[]>([]);
+  const [activeAppInfo, setActiveAppInfo] = useState<{ application: string; process: string; windowTitle: string }>({
+    application: "Desktop",
+    process: "explorer.exe",
+    windowTitle: "Windows Desktop"
+  });
+
+  const setAutoMode = useCallback((enabled: boolean) => {
+    setAutoModeEnabledState(enabled);
+    import("@/services/backendBridge").then(({ BackendBridge }) => {
+      BackendBridge.setAutoMode(enabled);
+    });
+  }, []);
 
   const modeData = modeContextMap[contextMode] || modeContextMap["BALANCED"];
 
@@ -297,6 +321,14 @@ export function EchoDeskProvider({ children }: { children: ReactNode }) {
     contextConfidence: liveConfidence ?? modeData.confidence,
     contextSignals: liveSignals || modeData.signals,
     setLiveContextInfo,
+    autoModeEnabled,
+    setAutoMode,
+    modeReasons,
+    setModeReasons,
+    systemChanges,
+    setSystemChanges,
+    activeAppInfo,
+    setActiveAppInfo,
     samplingMode,
     setSamplingMode,
     signals,

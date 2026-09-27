@@ -18,7 +18,10 @@ export function useLiveSimulation() {
     setPrivacy,
     setProtectedApps,
     setTimelineEvents,
-    setEngineConnectionStatus
+    setEngineConnectionStatus,
+    setModeReasons,
+    setSystemChanges,
+    setActiveAppInfo
   } = useEchoDesk();
 
   const phaseRef = useRef(0);
@@ -34,7 +37,7 @@ export function useLiveSimulation() {
           setDeviceInfo(snapshot.system);
         }
 
-        // Sync real-time Context Engine state
+        // Sync real-time Context Engine & Mode state
         if (snapshot.contextMode) {
           setContextMode(snapshot.contextMode as any);
         }
@@ -44,6 +47,19 @@ export function useLiveSimulation() {
             snapshot.contextConfidence ?? 85,
             snapshot.contextSignals || []
           );
+        }
+        if (snapshot.activeApp) {
+          setActiveAppInfo({
+            application: snapshot.activeApp,
+            process: snapshot.process || "unknown.exe",
+            windowTitle: snapshot.windowTitle || "System Application Window"
+          });
+        }
+        if (snapshot.modeReasons && Array.isArray(snapshot.modeReasons)) {
+          setModeReasons(snapshot.modeReasons);
+        }
+        if (snapshot.systemChanges && Array.isArray(snapshot.systemChanges)) {
+          setSystemChanges(snapshot.systemChanges);
         }
 
         // Sync real-time sensor adapter signals if provided

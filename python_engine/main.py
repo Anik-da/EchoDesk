@@ -93,6 +93,24 @@ class EchoDeskHandler(http.server.BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(json.dumps({"success": True, "telemetryMode": engine.telemetry_mode}).encode("utf-8"))
 
+        elif self.path == "/api/auto-mode":
+            enabled = payload.get("enabled", True)
+            engine.set_auto_mode(enabled)
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self._send_cors_headers()
+            self.end_headers()
+            self.wfile.write(json.dumps({"success": True, "autoModeEnabled": engine.mode_manager.auto_mode_enabled}).encode("utf-8"))
+
+        elif self.path == "/api/set-mode":
+            mode = payload.get("mode", "DEEP FOCUS")
+            engine.set_operating_mode(mode)
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self._send_cors_headers()
+            self.end_headers()
+            self.wfile.write(json.dumps({"success": True, "mode": mode}).encode("utf-8"))
+
         elif self.path == "/api/simulation-mode":
             enabled = payload.get("enabled", True)
             engine.set_simulation_mode(enabled)

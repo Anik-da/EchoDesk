@@ -6,10 +6,17 @@ export interface BackendSnapshot {
   backendType: string;
   telemetryMode?: string;
   simulationMode?: boolean;
+  activeApp?: string;
+  process?: string;
+  windowTitle?: string;
   contextMode: string;
   contextSubtitle: string;
   contextConfidence: number;
   contextSignals: string[];
+  autoModeEnabled?: boolean;
+  currentMode?: string;
+  modeReasons?: string[];
+  systemChanges?: string[];
   inferenceLatency: number | null;
   signals: any[];
   privacy: {
@@ -198,6 +205,32 @@ export class BackendBridge {
       return null;
     } catch {
       return null;
+    }
+  }
+
+  public static async setAutoMode(enabled: boolean): Promise<boolean> {
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/auto-mode`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ enabled })
+      });
+      return res.ok;
+    } catch {
+      return false;
+    }
+  }
+
+  public static async setOperatingMode(mode: string): Promise<boolean> {
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/set-mode`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode })
+      });
+      return res.ok;
+    } catch {
+      return false;
     }
   }
 

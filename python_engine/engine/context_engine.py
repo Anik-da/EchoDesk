@@ -16,6 +16,7 @@ from adapters.simulation_adapter import (
 from engine.semantic_event_engine import SemanticEventEngine
 from engine.privacy_engine import PrivacyEngine
 from engine.ai_model_abstraction import ContextModel, get_hardware_capabilities
+from engine.mode_manager import mode_manager
 from engine.benchmark import RuntimeBenchmarker
 from storage.db import init_db, get_protected_apps, get_timeline_events, log_timeline_event
 from system.device_info import device_service
@@ -42,6 +43,7 @@ class ContextEngine:
         # Engines & models
         self.event_engine = SemanticEventEngine()
         self.privacy_engine = PrivacyEngine()
+        self.mode_manager = mode_manager
         self.model = ContextModel()
         self.model.load()
         self.benchmarker = RuntimeBenchmarker()
@@ -64,6 +66,19 @@ class ContextEngine:
     def set_simulation_mode(self, enabled: bool):
         self.simulation_mode = enabled
         self.telemetry_mode = "SIMULATION" if enabled else "LIVE"
+
+    def set_auto_mode(self, enabled: bool):
+        self.mode_manager.set_auto_mode(enabled)
+
+    def set_operating_mode(self, mode: str):
+        self.mode_manager.current_mode = mode
+        self.mode_manager.apply_mode_config(
+            mode,
+            self.real_camera,
+            self.real_audio,
+            self.real_screen,
+            self.real_activity
+        )
 
     def set_scenario(self, scenario: str):
         self.scenario = scenario
@@ -149,6 +164,7 @@ class ContextEngine:
         signals = [cam_data, aud_data, scr_data, act_data]
 
         active_app = scr_data.get("activeApp", "Desktop")
+        process_name = scr_data.get("process", "explorer.exe")
         window_title = scr_data.get("windowTitle", "System Desktop")
 
         # Privacy Filtration
@@ -161,6 +177,12 @@ class ContextEngine:
             screen_data=scr_data,
             activity_data=act_data
         )
+
+        # Signal indicators
+        user_present = cam_data.get("user_present", False) or "PERSON_PRESENT" in cam_data.get("semantic_outputs", [])
+        second_person = "MULTIPLE_PEOPLE" in cam_data.get("semantic_outputs", [])
+        speech_detected = "SPEECH_ACTIVITY" in aud_data.get("semantic_outputs", []) or "SPEECH_DETECTED" in aud_data.get("semantic_outputs", [])
+        keyboard_active = "KEYBOARD_ACTIVITY" in act_data.get("semantic_outputs", []) or act_data.get("activityLevel", 0) > 30
 
         # Extract constituent real confidences
         vision_conf = float(cam_data.get("confidence", 0.0))
@@ -179,6 +201,26 @@ class ContextEngine:
             audio_conf=audio_conf,
             app_conf=app_conf,
             act_conf=act_conf
+        )
+
+        # Auto Mode Selection & ModeConfig Adaptation
+        current_mode, mode_reasons = self.mode_manager.determine_mode(
+            context_state=context_state,
+            events=events,
+            active_app=priv_result["sanitized_app"],
+            private_mode_active=priv_result["private_mode_active"],
+            user_present=user_present,
+            speech_detected=speech_detected,
+            second_person=second_person,
+            keyboard_active=keyboard_active
+        )
+
+        mode_config = self.mode_manager.apply_mode_config(
+            current_mode,
+            self.real_camera,
+            self.real_audio,
+            self.real_screen,
+            self.real_activity
         )
 
         # Log timeline event on context transition
@@ -305,10 +347,18 @@ class ContextEngine:
             "telemetryMode": "LIVE HARDWARE" if self.telemetry_mode == "LIVE" else "DEVELOPMENT SIMULATION",
             "simulationMode": self.simulation_mode,
             "devScenario": self.scenario,
-            "contextMode": context_state,
+            "activeApp": priv_result["sanitized_app"],
+            "process": process_name,
+            "windowTitle": window_title,
+            "contextMode": current_mode,
             "contextSubtitle": subtitle,
             "contextConfidence": confidence,
             "contextSignals": [e["type"] for e in events],
+            "autoModeEnabled": self.mode_manager.auto_mode_enabled,
+            "currentMode": current_mode,
+            "modeReasons": mode_reasons,
+            "modeConfig": mode_config,
+            "systemChanges": mode_config.get("changes", []),
             "inferenceLatency": total_latency_ms,
             "realLatencies": {
                 "yolox": yolox_lat,

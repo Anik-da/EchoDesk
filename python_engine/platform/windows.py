@@ -1,6 +1,7 @@
 import os
 import sys
 import ctypes
+from ctypes import wintypes
 import subprocess
 import json
 import importlib
@@ -12,6 +13,44 @@ try:
     import winreg
 except ImportError:
     winreg = None
+
+PROCESS_MAP = {
+    "code.exe": "Visual Studio Code",
+    "devenv.exe": "Visual Studio",
+    "idea64.exe": "IntelliJ IDEA",
+    "pycharm64.exe": "PyCharm",
+    "webstorm64.exe": "WebStorm",
+    "clion64.exe": "CLion",
+    "rider64.exe": "Rider",
+    "windowsterminal.exe": "Windows Terminal",
+    "cmd.exe": "Command Prompt",
+    "powershell.exe": "PowerShell",
+    "pwsh.exe": "PowerShell Core",
+    
+    "chrome.exe": "Google Chrome",
+    "msedge.exe": "Microsoft Edge",
+    "firefox.exe": "Mozilla Firefox",
+    "brave.exe": "Brave Browser",
+    "opera.exe": "Opera Browser",
+    
+    "teams.exe": "Microsoft Teams",
+    "ms-teams.exe": "Microsoft Teams",
+    "zoom.exe": "Zoom",
+    "skype.exe": "Skype",
+    "slack.exe": "Slack",
+    "discord.exe": "Discord",
+    
+    "explorer.exe": "File Explorer",
+    "notepad.exe": "Notepad",
+    "wordpad.exe": "WordPad",
+    "winword.exe": "Microsoft Word",
+    "excel.exe": "Microsoft Excel",
+    "powerpnt.exe": "Microsoft PowerPoint",
+    
+    "1password.exe": "1Password",
+    "bitwarden.exe": "Bitwarden",
+    "keepass.exe": "KeePass"
+}
 
 class WindowsPlatform(PlatformBase):
     """Windows-specific platform adapter utilizing Win32 APIs, WMI, and Registry."""
@@ -109,11 +148,15 @@ class WindowsPlatform(PlatformBase):
         os.makedirs(target_dir, exist_ok=True)
         return target_dir
 
-    def get_window_context(self) -> tuple[str, str]:
+    def get_window_context(self) -> tuple[str, str, str]:
+        """Queries Win32 API to return (app_name, window_title, process_name) for current active foreground window."""
+        if sys.platform != "win32":
+            return "Desktop", "System Window", "desktop.exe"
+
         try:
             hwnd = ctypes.windll.user32.GetForegroundWindow()
             if not hwnd:
-                return "Desktop", "Windows Desktop"
+                return "Desktop", "Windows Desktop", "explorer.exe"
 
             length = ctypes.windll.user32.GetWindowTextLengthW(hwnd)
             buf = ctypes.create_unicode_buffer(length + 1)
@@ -123,28 +166,31 @@ class WindowsPlatform(PlatformBase):
             pid = ctypes.c_ulong()
             ctypes.windll.user32.GetWindowThreadProcessId(hwnd, ctypes.byref(pid))
 
-            lower_title = title.lower()
-            if "code" in lower_title or "visual studio" in lower_title:
-                app_name = "VS Code"
-            elif "chrome" in lower_title:
-                app_name = "Google Chrome"
-            elif "edge" in lower_title:
-                app_name = "Microsoft Edge"
-            elif "zoom" in lower_title or "meeting" in lower_title:
-                app_name = "Zoom"
-            elif "slack" in lower_title:
-                app_name = "Slack"
-            elif "1password" in lower_title:
-                app_name = "1Password"
-            elif "explorer" in lower_title or "this pc" in lower_title:
-                app_name = "File Explorer"
-            else:
-                parts = title.rsplit(" - ", 1)
-                app_name = parts[1].strip() if len(parts) > 1 and len(parts[1].strip()) > 0 else title[:25].strip()
+            process_name = "unknown.exe"
+            # PROCESS_QUERY_LIMITED_INFORMATION (0x1000)
+            h_process = ctypes.windll.kernel32.OpenProcess(0x1000, False, pid.value)
+            if h_process:
+                buf_size = wintypes.DWORD(1024)
+                filename_buf = ctypes.create_unicode_buffer(1024)
+                if ctypes.windll.kernel32.QueryFullProcessImageNameW(h_process, 0, filename_buf, ctypes.byref(buf_size)):
+                    exe_path = filename_buf.value
+                    process_name = os.path.basename(exe_path)
+                ctypes.windll.kernel32.CloseHandle(h_process)
 
-            return app_name or "Active Application", title
+            proc_lower = process_name.lower()
+            app_name = PROCESS_MAP.get(proc_lower)
+
+            if not app_name:
+                # Derive clean app name from executable or title
+                if proc_lower.endswith(".exe"):
+                    app_name = proc_lower[:-4].capitalize()
+                else:
+                    parts = title.rsplit(" - ", 1)
+                    app_name = parts[1].strip() if len(parts) > 1 and len(parts[1].strip()) > 0 else title[:25].strip()
+
+            return app_name or "Active Application", title, process_name
         except Exception:
-            return "Active Application", "Windows Application"
+            return "Active Application", "Windows Application", "unknown.exe"
 
     def get_idle_time_ms(self) -> int:
         try:

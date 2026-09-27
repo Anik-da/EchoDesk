@@ -2,14 +2,30 @@ import { useEffect, useState } from "react";
 import { useEchoDesk } from "@/store/EchoDeskContext";
 import { useAnimatedNumber } from "@/hooks/useAnimatedNumber";
 import { cn } from "@/utils/cn";
+import { CheckCircle2, ShieldAlert, Cpu } from "lucide-react";
 
 export function ContextCore() {
-  const { currentContext, contextConfidence, contextMode, setContextMode, signals, contextSubtitle, aiRuntime, systemStatus } = useEchoDesk();
+  const {
+    currentContext,
+    contextConfidence,
+    contextMode,
+    setContextMode,
+    signals,
+    contextSubtitle,
+    aiRuntime,
+    systemStatus,
+    autoModeEnabled,
+    setAutoMode,
+    modeReasons,
+    systemChanges,
+    activeAppInfo
+  } = useEchoDesk();
+
   const animatedConf = useAnimatedNumber(contextConfidence);
   const isPrivate = contextMode === "PRIVATE";
 
   const userStatus = isPrivate ? "PAUSED" : (signals[0]?.state === "active" ? "PRESENT" : (signals[0]?.state === "off" ? "OFF" : "AWAY"));
-  const appStatus = isPrivate ? "N/A" : (signals[2]?.description ? signals[2].description.replace(" active", "").replace("Active: ", "").slice(0, 14) : "DESKTOP");
+  const appDisplay = isPrivate ? "N/A" : (activeAppInfo?.application || "DESKTOP");
   const envStatus = isPrivate ? "N/A" : (signals[1]?.state === "active" ? "SPEECH" : (signals[1]?.state === "off" ? "OFF" : "QUIET"));
   const actStatus = isPrivate ? "NONE" : (signals[3]?.state === "active" ? "ACTIVE" : (signals[3]?.state === "idle" ? "IDLE" : "OFF"));
   const tempDisplay = isPrivate ? "PAUSED" : (systemStatus.gpuTemp !== null ? `${systemStatus.gpuTemp}°C` : (systemStatus.cpuTemp !== null ? `${systemStatus.cpuTemp}°C` : "Unavailable"));
@@ -25,11 +41,6 @@ export function ContextCore() {
 
   const theme = modeThemes[contextMode] || modeThemes["DEEP FOCUS"];
 
-  // Gauge calculations (220 degree arc from 160 deg to 380 deg)
-  const radius = 100;
-  const maxArcAngle = 220;
-  const currentAngle = (animatedConf / 100) * maxArcAngle;
-
   const modeOptions = [
     { label: "Deep Focus", value: "DEEP FOCUS" },
     { label: "Balanced", value: "BALANCED" },
@@ -38,36 +49,50 @@ export function ContextCore() {
     { label: "Private", value: "PRIVATE" },
   ];
 
-  const [bottomProfile, setBottomProfile] = useState("Custom");
-
   return (
-    <div className="relative flex flex-col items-center justify-between w-full h-full p-2 select-none">
-      {/* 1. TOP MODE SELECTOR BAR (GIGABYTE style) */}
-      <div className="flex items-center gap-1.5 rounded-full bg-[#0a0b0e] p-1 border border-zinc-800/80 mb-2">
-        {modeOptions.map((opt) => {
-          const active = contextMode === opt.value;
-          const optTheme = modeThemes[opt.value];
-          return (
-            <button
-              key={opt.value}
-              onClick={() => setContextMode(opt.value as any)}
-              className={cn(
-                "rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider transition-all duration-200",
-                active
-                  ? `${optTheme.bg} ${optTheme.text} ${optTheme.border} border shadow-lg`
-                  : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900"
-              )}
-              style={active ? { boxShadow: `0 0 12px ${optTheme.glow}` } : {}}
-            >
-              {opt.label}
-            </button>
-          );
-        })}
+    <div className="relative flex flex-col items-center justify-between w-full h-full p-2 select-none font-mono">
+      {/* 1. TOP MODE SELECTOR & AUTO MODE TOGGLE BAR */}
+      <div className="flex items-center justify-between w-full mb-1">
+        <div className="flex items-center gap-1.5 rounded-full bg-[#0a0b0e] p-1 border border-zinc-800/80">
+          {modeOptions.map((opt) => {
+            const active = contextMode === opt.value;
+            const optTheme = modeThemes[opt.value];
+            return (
+              <button
+                key={opt.value}
+                onClick={() => setContextMode(opt.value as any)}
+                className={cn(
+                  "rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider transition-all duration-200",
+                  active
+                    ? `${optTheme.bg} ${optTheme.text} ${optTheme.border} border shadow-lg`
+                    : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900"
+                )}
+                style={active ? { boxShadow: `0 0 12px ${optTheme.glow}` } : {}}
+              >
+                {opt.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Auto Mode Toggle */}
+        <button
+          onClick={() => setAutoMode(!autoModeEnabled)}
+          className={cn(
+            "px-2.5 py-1 rounded-full text-[9px] font-bold tracking-wider uppercase border transition-all",
+            autoModeEnabled
+              ? "bg-lime-950/80 border-lime-500/60 text-lime-400 shadow-sm"
+              : "bg-zinc-900 border-zinc-700 text-zinc-500 hover:text-zinc-300"
+          )}
+          title="Toggle Automatic Mode Selection driven by Context Engine"
+        >
+          {autoModeEnabled ? "● AUTO MODE: ON" : "○ AUTO MODE: OFF"}
+        </button>
       </div>
 
-      {/* 2. CENTRAL SYSTEM DIAL GAUGE (Authentic GIGABYTE Control Center Style) */}
-      <div className="relative flex-1 w-full flex items-center justify-center min-h-[300px]">
-        {/* Radial burst lines behind gauge (like GIGABYTE UI) */}
+      {/* 2. CENTRAL SYSTEM DIAL GAUGE */}
+      <div className="relative flex-1 w-full flex items-center justify-center min-h-[260px]">
+        {/* Radial burst lines */}
         <div className="absolute inset-0 flex items-center justify-center opacity-25 pointer-events-none">
           <svg viewBox="0 0 400 400" className="w-[380px] h-[380px]">
             {Array.from({ length: 72 }).map((_, i) => {
@@ -83,7 +108,7 @@ export function ContextCore() {
         </div>
 
         {/* MAIN SVG GAUGE */}
-        <svg viewBox="0 0 340 340" className="w-full h-full max-w-[340px] max-h-[340px] z-10">
+        <svg viewBox="0 0 340 340" className="w-full h-full max-w-[320px] max-h-[320px] z-10">
           <defs>
             <filter id="gaugeGlow" x="-20%" y="-20%" width="140%" height="140%">
               <feGaussianBlur stdDeviation="3" result="blur" />
@@ -91,7 +116,7 @@ export function ContextCore() {
             </filter>
           </defs>
 
-          {/* Outer Tachometer Ticks (1, 2, 3, 4, 5) */}
+          {/* Outer Tachometer Ticks */}
           {[1, 2, 3, 4, 5].map((num, i) => {
             const startAngle = 140;
             const endAngle = 400;
@@ -148,7 +173,7 @@ export function ContextCore() {
             strokeLinecap="round"
           />
 
-          {/* Colored Active Arc (CHANGES COLOR WITH EVERY MODE!) */}
+          {/* Colored Active Arc */}
           <path
             d="M 75,230 A 100,100 0 1,1 265,230"
             fill="none"
@@ -198,7 +223,7 @@ export function ContextCore() {
             fontFamily="sans-serif"
             letterSpacing="1.5"
           >
-            {isPrivate ? "PRIVACY ENGAGED" : "CONFIDENCE SCORE"}
+            {isPrivate ? "PRIVACY ENGAGED" : "DERIVED CONFIDENCE"}
           </text>
 
           {/* Needle Indicator */}
@@ -209,15 +234,15 @@ export function ContextCore() {
             </g>
           )}
 
-          {/* Left Readout: Clock Speed / Latency */}
+          {/* Left Readout */}
           <text x="65" y="275" textAnchor="middle" fill="#e4e4e7" fontSize="13" fontWeight="bold" fontFamily="monospace">
             {aiRuntime.inferenceLatency !== null ? `${aiRuntime.inferenceLatency} ms` : "N/A"}
           </text>
           <text x="65" y="290" textAnchor="middle" fill="#71717a" fontSize="7" className="uppercase" fontFamily="sans-serif">
-            Context processing
+            PIPELINE LATENCY
           </text>
 
-          {/* Right Readout: Temperature / Activity */}
+          {/* Right Readout */}
           <text x="275" y="275" textAnchor="middle" fill="#e4e4e7" fontSize="12" fontWeight="bold" fontFamily="monospace">
             {tempDisplay}
           </text>
@@ -226,29 +251,30 @@ export function ContextCore() {
           </text>
         </svg>
 
-        {/* 4 Supporting Signals Cards (GIGABYTE Style Positioned Around Dial) */}
-        <div className="absolute top-4 left-2 flex flex-col gap-1">
+        {/* 4 Supporting Signal Badges */}
+        <div className="absolute top-2 left-2 flex flex-col gap-0.5">
           <span className="text-[8px] font-mono uppercase text-zinc-500">USER</span>
           <span className={cn("text-[10px] font-mono font-bold uppercase", userStatus === "PRESENT" ? "text-lime-400" : "text-zinc-500")}>
             {userStatus}
           </span>
         </div>
 
-        <div className="absolute top-4 right-2 flex flex-col items-end gap-1 max-w-[110px]">
-          <span className="text-[8px] font-mono uppercase text-zinc-500">APPLICATION</span>
-          <span className="text-[10px] font-mono font-bold text-zinc-200 uppercase truncate" title={appStatus}>
-            {appStatus}
+        <div className="absolute top-2 right-2 flex flex-col items-end gap-0.5 max-w-[120px]">
+          <span className="text-[8px] font-mono uppercase text-zinc-500">ACTIVE APP</span>
+          <span className="text-[10px] font-mono font-bold text-cyan-400 uppercase truncate" title={activeAppInfo?.windowTitle}>
+            {appDisplay}
           </span>
+          <span className="text-[8px] text-zinc-500 font-mono truncate">{activeAppInfo?.process || "explorer.exe"}</span>
         </div>
 
-        <div className="absolute bottom-4 left-2 flex flex-col gap-1">
+        <div className="absolute bottom-2 left-2 flex flex-col gap-0.5">
           <span className="text-[8px] font-mono uppercase text-zinc-500">ENVIRONMENT</span>
           <span className={cn("text-[10px] font-mono font-bold uppercase", envStatus === "SPEECH" ? "text-amber-400" : "text-cyan-400")}>
             {envStatus}
           </span>
         </div>
 
-        <div className="absolute bottom-4 right-2 flex flex-col items-end gap-1">
+        <div className="absolute bottom-2 right-2 flex flex-col items-end gap-0.5">
           <span className="text-[8px] font-mono uppercase text-zinc-500">ACTIVITY</span>
           <span className={cn("text-[10px] font-mono font-bold uppercase", actStatus === "ACTIVE" ? "text-amber-400" : "text-zinc-500")}>
             {actStatus}
@@ -256,25 +282,50 @@ export function ContextCore() {
         </div>
       </div>
 
-      {/* 3. BOTTOM PROFILE SELECTOR STRIP (Automatic / Maximum / Custom) */}
-      <div className="flex items-center gap-2 mt-1">
-        {["Automatic", "Maximum", "Custom"].map((p) => {
-          const active = bottomProfile === p;
-          return (
-            <button
-              key={p}
-              onClick={() => setBottomProfile(p)}
-              className={cn(
-                "rounded px-3 py-1 text-[9px] font-mono font-bold uppercase transition-all",
-                active
-                  ? `${theme.bg} ${theme.text} ${theme.border} border shadow-md`
-                  : "bg-zinc-900/60 text-zinc-500 border border-zinc-800 hover:text-zinc-300"
+      {/* 3. EVENT-DERIVED AUTO MODE REASONS & SYSTEM INTEGRATIONS PANEL */}
+      <div className="w-full bg-[#0a0b0d] border border-zinc-800/80 rounded p-2 text-[10px] font-mono mt-1 space-y-1">
+        <div className="flex items-center justify-between text-[9px] uppercase font-bold text-zinc-400 border-b border-zinc-800/60 pb-1">
+          <span className="flex items-center gap-1">
+            <Cpu className="w-3 h-3 text-cyan-400" />
+            <span>AUTO MODE SELECTION EVIDENCE ({contextMode})</span>
+          </span>
+          <span className={theme.text}>{contextSubtitle}</span>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2 pt-0.5">
+          {/* Left: Mode Reasons */}
+          <div>
+            <span className="text-[8px] uppercase text-zinc-500 block mb-0.5">EVENT-DERIVED REASONS:</span>
+            <div className="space-y-0.5">
+              {modeReasons.length > 0 ? (
+                modeReasons.map((reason, idx) => (
+                  <div key={idx} className="text-zinc-300 text-[9px] flex items-center gap-1 truncate">
+                    <span>{reason}</span>
+                  </div>
+                ))
+              ) : (
+                <div className="text-zinc-500 italic text-[9px]">Analyzing live context signals...</div>
               )}
-            >
-              {p}
-            </button>
-          );
-        })}
+            </div>
+          </div>
+
+          {/* Right: Windows OS System Integrations */}
+          <div>
+            <span className="text-[8px] uppercase text-zinc-500 block mb-0.5">WINDOWS SYSTEM INTEGRATION:</span>
+            <div className="space-y-0.5">
+              {systemChanges.length > 0 ? (
+                systemChanges.map((change, idx) => (
+                  <div key={idx} className="text-lime-400 text-[9px] flex items-center gap-1 truncate">
+                    <CheckCircle2 className="w-2.5 h-2.5 text-lime-400 flex-shrink-0" />
+                    <span>{change}</span>
+                  </div>
+                ))
+              ) : (
+                <div className="text-zinc-500 text-[9px] italic">Normal OS Profile (Balanced)</div>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

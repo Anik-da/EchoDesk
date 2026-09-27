@@ -48,7 +48,7 @@ EchoDesk executes 100% on-device local AI inference using Qualcomm AI Hub optimi
 
 ### WINDOWS
 
-1. Download **[EchoDesk for Windows](https://github.com/Anik-da/EchoDesk/releases/download/v1.0.0/EchoDesk-Setup-Windows-x64.exe)**.
+1. Download **[EchoDesk for Windows](https://github.com/Anik-da/EchoDesk/releases/latest/download/EchoDesk-Setup-Windows-x64.exe)**.
 2. Run `EchoDesk-Setup.exe` (or `EchoDesk-Setup-Windows-x64.exe`).
    > 💡 **Windows Defender SmartScreen Notice**: Because EchoDesk is an independent open-source binary, Windows SmartScreen will display *"Windows protected your PC"*. To proceed with the installation:
    > 1. Click **"More info"** (underlined link on the dialog).
